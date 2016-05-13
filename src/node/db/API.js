@@ -1242,6 +1242,97 @@ exports.createDiffHTML = function(padID, startRev, endRev, callback){
   });
 }
 
+/**
+exportHTML(padID, [rev]) returns the html of a pad 
+
+For Newsflex use.
+
+Example returns:
+
+{code: 0, message:"ok", data: {text:"Welcome <strong>Text</strong>"}}
+{code: 1, message:"padID does not exist", data: null}
+*/
+exports.exportHTML = function(padID, rev, callback)
+{
+  if(typeof rev == "function")
+  {
+    callback = rev;
+    rev = undefined; 
+  }
+
+  if (rev !== undefined && typeof rev != "number")
+  {
+    if (!isNaN(parseInt(rev)))
+    {
+      rev = parseInt(rev);
+    }
+    else
+    {
+      callback(new customError("rev is not a number","apierror"));
+      return;
+    }
+  }
+
+  if(rev !== undefined && rev < 0)
+  {
+     callback(new customError("rev is a negative number","apierror"));
+     return;
+  }
+
+  if(rev !== undefined && !is_int(rev))
+  {
+    callback(new customError("rev is a float value","apierror"));
+    return;
+  }
+
+    exportHtml.getPadHTMLDocument(padID, rev, '', function(err, html)
+    {
+        if(ERR(err, callback)) return;
+        //html = "<!DOCTYPE HTML><html><body>" +html; // adds HTML head
+        //html += "</body></html>";
+        var data = {html: html};
+        callback(null, data);
+    });
+};
+
+/**
+importHTML(padID, html) imports an html document for a pad
+
+For Newsflex use.
+
+Example returns:
+
+{code: 0, message:"ok", data: null}
+{code: 1, message:"padID does not exist", data: null}
+*/
+exports.importHTML = function(padID, html, callback)
+{
+  //html is required
+  if(typeof html != "string")
+  {
+    callback(new customError("html is no string","apierror"));
+    return;
+  }
+
+  //get the pad
+  getPadSafe(padID, true, function(err, pad)
+  {
+    if(ERR(err, callback)) return;
+
+    // add a new changeset with the new html to the pad
+    importHtml.setPadHTML(pad, cleanText(html), function(e){
+      if(e){
+        callback(new customError("HTML is malformed","apierror"));
+        return;
+      }else{
+        //update the clients on the pad
+        padMessageHandler.updatePadClients(pad, callback);
+        return;
+      }
+    });
+  });
+};
+
 /******************************/
 /** INTERNAL HELPER FUNCTIONS */
 /******************************/
@@ -1297,3 +1388,5 @@ function getPadSafe(padID, shouldExist, text, callback)
     }
   });
 }
+
+

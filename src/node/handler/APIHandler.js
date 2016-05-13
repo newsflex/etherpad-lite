@@ -494,6 +494,8 @@ var version =
   , "getChatHead"               : ["padID"]
   , "restoreRevision"           : ["padID", "rev"]
   , "appendText"                : ["padID", "text"]
+  , "exportHTML"                : ["padID", "rev"]
+  , "importHTML"                : ["padID", "html"]
   }
 };
 
@@ -545,7 +547,7 @@ exports.handle = function(apiVersion, functionName, fields, req, res)
   //say goodbye if this is a unkown function
   if(!isKnownFunctionname)
   {
-    res.send({code: 3, message: "no such function", data: null});
+    res.send({code: 3, message: "no such function......", data: null});
     return;
   }
 
