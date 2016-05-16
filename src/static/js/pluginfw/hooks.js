@@ -123,5 +123,15 @@ exports.callAllStr = function(hook_name, args, sep, pre, post) {
   for (var i = 0, ii = callhooks.length; i < ii; i++) {
     newCallhooks[i] = pre + callhooks[i] + post;
   }
-  return newCallhooks.join(sep || "");
+
+  // modified by Joe to fix duplicate lines from Export with multiple
+  // plugins. to fix: https://github.com/ether/etherpad-lite/issues/2486
+  // we really only want the last item in the array. should have all the
+  // export transformations
+  if (newCallhooks && newCallhooks.length > 0) {
+    // be sure to return an array of 1 item
+    return _.last(newCallhooks, 1);
+  }else {
+    return [];
+  }
 }
