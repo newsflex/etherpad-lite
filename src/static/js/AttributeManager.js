@@ -261,6 +261,41 @@ AttributeManager.prototype = _(AttributeManager.prototype).extend({
       return hasAttrib
     }
   },
+  /*
+    Gets all attributes present in the selection
+    returns a list of attributes in the format
+    [ ["key","value"], ["key","value"], ...  ]
+  */
+  getAttributesOnSelection: function() {
+    var dam = this;
+    var selStart = this.rep.selStart;
+    var selEnd = this.rep.selEnd;
+    var attribs = [];
+
+    // No range selected, just return the attributes on the position
+    if (selStart[1] == selEnd[1] && selStart[0] == selEnd[0]) {
+      return dam.getAttributesOnCaret();
+    }
+
+    // Loop over each line in the selection
+    for (var l = selStart[0]; l <= selEnd[0]; l++) {
+      // The first character is either the start of the line or the first character in the selection
+      var firstChar = (selStart[0] == l) ? selStart[1] : 0;
+      // The last character is either the end of the line or the last character in the selection
+      var lastChar = (selEnd[0] == l) ? selEnd[1] : this.rep.lines.atIndex(selStart[0]).text.length;
+
+      for (var c = firstChar; c < lastChar; c++) {
+        var local = dam.getAttributesOnPosition(l, c);
+        attribs = _.union(attribs, local);
+      }
+    }
+
+    attribs = _.uniq(attribs, function (i) {
+      return i[0] + i[1];
+    });
+
+    return attribs;
+  },
 
   /*
     Gets all attributes at a position containing line number and column
