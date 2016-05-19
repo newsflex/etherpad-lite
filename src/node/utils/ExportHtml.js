@@ -454,7 +454,7 @@ function getHTMLFromAtext(pad, atext, authorColors)
 
       if (lineContentFromHook)
       {
-        pieces.push(lineContentFromHook, '');
+        pieces.push(lineContentFromHook, '<br>');
       }
       else
       {
