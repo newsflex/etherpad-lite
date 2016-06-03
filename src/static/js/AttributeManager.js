@@ -274,7 +274,8 @@ AttributeManager.prototype = _(AttributeManager.prototype).extend({
 
     // No range selected, just return the attributes on the position
     if (selStart[1] == selEnd[1] && selStart[0] == selEnd[0]) {
-      return dam.getAttributesOnCaret();
+      var start = this.rep.selStart.slice();
+      return dam.getAttributesOnPosition(start[0], (start[1] > 0) ? start[1]-1 : start[1]);
     }
 
     // Loop over each line in the selection
