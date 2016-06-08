@@ -625,6 +625,9 @@ table#otheruserstable {
   border-top-right-radius: 5px;
   background-color: #fff;
   cursor: pointer;
+
+  /* added by joe to remove flickr of chat hiding when disabled */
+  display: none;
 }
 #chaticon a {
   text-decoration: none
@@ -1304,5 +1307,3 @@ input[type=checkbox] {
 .hideControlsEditbar{
   display:none !important;
 }
-
-
