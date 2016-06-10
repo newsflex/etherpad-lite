@@ -292,7 +292,6 @@ AttributeManager.prototype = _(AttributeManager.prototype).extend({
     attribs = _.uniq(attribs, function (i) {
       return i[0] + i[1];
     });
-    console.log(attribs);
     return attribs;
   },
 
