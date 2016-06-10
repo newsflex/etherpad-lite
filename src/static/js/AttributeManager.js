@@ -271,13 +271,11 @@ AttributeManager.prototype = _(AttributeManager.prototype).extend({
     var selStart = this.rep.selStart;
     var selEnd = this.rep.selEnd;
     var attribs = [];
-
     // No range selected, just return the attributes on the position
     if (selStart[1] == selEnd[1] && selStart[0] == selEnd[0]) {
       var start = this.rep.selStart.slice();
       return dam.getAttributesOnPosition(start[0], (start[1] > 0) ? start[1]-1 : start[1]);
     }
-
     // Loop over each line in the selection
     for (var l = selStart[0]; l <= selEnd[0]; l++) {
       // The first character is either the start of the line or the first character in the selection
@@ -287,14 +285,14 @@ AttributeManager.prototype = _(AttributeManager.prototype).extend({
 
       for (var c = firstChar; c < lastChar; c++) {
         var local = dam.getAttributesOnPosition(l, c);
-        attribs = _.union(attribs, local);
+        attribs = attribs.concat(local);
       }
     }
 
     attribs = _.uniq(attribs, function (i) {
       return i[0] + i[1];
     });
-
+    console.log(attribs);
     return attribs;
   },
 
