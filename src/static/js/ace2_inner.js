@@ -49,6 +49,11 @@ var hooks = require('./pluginfw/hooks');
 
 function Ace2Inner(){
 
+  // hack by joe for duration cursor
+  // use ENABLE_DURATION_HACK to enable and disable the duration cursor hack.
+  var direction = '';
+  var ENABLE_DURATION_HACK = false;
+
   var makeChangesetTracker = require('./changesettracker').makeChangesetTracker;
   var colorutils = require('./colorutils').colorutils;
   var makeContentCollector = require('./contentcollector').makeContentCollector;
@@ -4018,8 +4023,19 @@ function Ace2Inner(){
            We have to do this the way we do because rep. doesn't hold the value for keyheld events IE if the user
            presses and holds the arrow key ..  Sorry if this is ugly, blame Chrome's weird handling of viewports after new content is added*/
         if((evt.which == 37 || evt.which == 38 || evt.which == 39 || evt.which == 40) && browser.chrome){
+
+          // hack by joe for duration cursor.
+          // we need to keep track of current direction
+          // inside a global direction var
+          if (evt.which == 37) direction = 'left';
+          else if (evt.which == 39) direction = 'right';
+          else direction = '';
+
           var viewport = getViewPortTopBottom();
           var myselection = document.getSelection(); // get the current caret selection, can't use rep. here because that only gives us the start position not the current
+
+          //console.log('selection = ', myselection);
+
           var caretOffsetTop = myselection.focusNode.parentNode.offsetTop || myselection.focusNode.offsetTop; // get the carets selection offset in px IE 214
           var lineHeight = $(myselection.focusNode.parentNode).parent("div").height(); // get the line height of the caret line
           // top.console.log("offsetTop", myselection.focusNode.parentNode.parentNode.offsetTop);
@@ -4704,6 +4720,7 @@ function Ace2Inner(){
         }
         if (isNodeText(p.node))
         {
+
           return {
             container: p.node,
             offset: p.index
@@ -4711,10 +4728,47 @@ function Ace2Inner(){
         }
         else
         {
+
+          // this is joe's hack to make sure the cursor does not get stuck or stop
+          // inside the duration tag.
+          var container = p.node.parentNode;
+          var offset = childIndex(p.node) + p.index;
+
+          if (ENABLE_DURATION_HACK) {
+              if (p.node && p.node.tagName === 'CANVAS') {
+                  //console.log('The caret is in the duration canvas');
+
+                  // if we are inside the canvas tag and going "right"
+                  // we will jump the tag but finding the parent's next sibling and
+                  // attempting to select that.
+                  if (direction === 'right') {
+                    if (p.node.parentNode) {
+                        var parent = p.node.parentNode;
+                        if (parent.parentNode) {
+                            //console.log('parent.parentNode = ', parent.parentNode);
+                            //console.log('parent.parentNode.nextSibling = ', parent.parentNode.nextSibling);
+                            if (parent.parentNode.nextSibling){
+                                container = parent.parentNode.nextSibling.firstChild;
+                                offset = 1;
+                                //console.log('jump to ', parent.parentNode.nextSibling.firstChild);
+                            }else {
+                                // there are no ndoes after the duration. so no text or extra spaces
+                                // after the duration. in this case we have to leave the cursor on the
+                                // duration placeholder
+                                container = parent.parentNode;
+                                offset = 1;
+                                //console.log('jump to ', parent.parentNode);
+                            }
+                        }
+                    }
+                }
+             }
+          } // end ENABLE_DURATION_HACK test
+
           // p.index in {0,1}
           return {
-            container: p.node.parentNode,
-            offset: childIndex(p.node) + p.index
+            container: container,
+            offset: offset
           };
         }
       }
