@@ -52,7 +52,7 @@ function Ace2Inner(){
   // hack by joe for duration cursor
   // use ENABLE_DURATION_HACK to enable and disable the duration cursor hack.
   var direction = '';
-  var ENABLE_DURATION_HACK = false;
+  var ENABLE_DURATION_HACK = true;
 
   var makeChangesetTracker = require('./changesettracker').makeChangesetTracker;
   var colorutils = require('./colorutils').colorutils;
@@ -132,7 +132,8 @@ function Ace2Inner(){
   var iframePadBottom = 0,
       iframePadRight = 0;
 
-  var console = (DEBUG && window.console);
+  // joe removed the DEBUG flag for console once and for all
+  var console = (window.console);
   var documentAttributeManager;
 
   if (!window.console)
@@ -1898,6 +1899,15 @@ function Ace2Inner(){
       var thisLine = rep.lines.atIndex(lineNum);
       var prevLine = rep.lines.prev(thisLine);
       var prevLineText = prevLine.text;
+
+      // hack by joe to keep duration from incorrectly indenting when
+      // duration tag is first text on the line
+      //console.log('prevLineText = ', prevLineText);
+      var dontIndent = (prevLineText || '').trim() === '';
+      if (dontIndent) {
+          return;
+      }
+
       var theIndent = /^ *(?:)/.exec(prevLineText)[0];
       var shouldIndent = parent.parent.clientVars.indentationOnNewLine;
       if (shouldIndent && /[\[\(\:\{]\s*$/.exec(prevLineText))
