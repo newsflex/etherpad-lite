@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -252,14 +252,14 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
     {
       state.listNesting = (state.listNesting || 0) + 1;
     }
-    
+
     if(listType === 'none' || !listType ){
-      delete state.lineAttributes['list']; 
+      delete state.lineAttributes['list'];
     }
     else{
       state.lineAttributes['list'] = listType;
     }
-    
+
     _recalcAttribString(state);
     return oldListType;
   }
@@ -303,7 +303,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
         // see https://github.com/ether/etherpad-lite/issues/2567 for more information
         // in long term the contentcollector should be refactored to get rid of this workaround
         var ATTRIBUTE_SPLIT_STRING = "::";
-        
+
         // see if attributeString is splittable
         var attributeSplits = a.split(ATTRIBUTE_SPLIT_STRING);
         if (attributeSplits.length > 1) {
@@ -410,7 +410,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
         text:txt,
         styl: null,
         cls: null
-      });  
+      });
       var txt = (typeof(txtFromHook)=='object'&&txtFromHook.length==0)?dom.nodeValue(node):txtFromHook[0];
 
       var rest = '';
@@ -504,7 +504,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
           tvalue:tvalue,
           styl: null,
           cls: null
-        });       
+        });
         var startNewLine= (typeof(induceLineBreak)=='object'&&induceLineBreak.length==0)?true:induceLineBreak[0];
         if(startNewLine){
           cc.startNewLine(state);
@@ -646,7 +646,51 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
           _exitAuthor(state, oldAuthorOrNull);
         }
       }
+      else {
+
+          // joe canvas duration hack for Pasting
+          // if we make it this far then the content collector has encounterd HTML
+          // tags that it does not know how to handle and thinks it is empty.
+
+          // we will create a hook to keep the code out of here but basically the hook
+          // expects you to return and object in the format
+          //    { text: ' ', attributes: [[attr: val]] };
+          //  The text will be APPENDED with the provided attributes
+          //
+        if (tname === 'canvas') {
+
+            try {
+                var textAndAttributes = hooks.callAll('collectContentCanvas', {
+                  cc: cc,
+                  state: state,
+                  tname: tname,
+                  styl: styl,
+                  cls: cls,
+                  node: node, // makes life easier to pass canvas node to hook,
+                  NPR_hook: true // just a flag for devs to know its one of ours
+                });
+
+                console.log('collectContentCanvas returned textAndAttributes = ', textAndAttributes);
+                if (textAndAttributes) {
+                    _.each(textAndAttributes, function(item) {
+                        var txt = textify(item.text);
+                        var attributes = item.attributes;
+                        console.log('Appending canvas replacement text to lines. txt ', txt);
+                        lines.appendText(txt, Changeset.makeAttribsString('+', attributes , apool));
+                    });
+                }
+            }
+            catch(e) {
+                console.log(e);
+                console.log('error in joe collectContentCanvas hook. handled it.');
+            }
+        }
+
+      }
+
     }
+
+
     if (!abrowser.msie)
     {
       _reachBlockPoint(node, 1, state);

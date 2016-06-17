@@ -271,9 +271,18 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
 
     BroadcastSlider.setAuthors(authors);
 
-    // added by joe to render durations AFTER
-    // they have been added to the DOM
-    hooks.callAll('postTimesliderRender', {});
+    // trust no one
+    try {
+        // added by joe to render durations AFTER
+        // they have been added to the DOM
+        hooks.callAll('postTimesliderRender', {
+            NPR_hook: true
+        });
+    }
+    catch(ex) {
+        console.error(ex);
+        console.error('Error in plugin hook postTimesliderRender. Swallowing it.');
+    }
   }
 
   function updateTimer()

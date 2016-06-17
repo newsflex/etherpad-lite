@@ -3486,6 +3486,8 @@ function Ace2Inner(){
 
   function doDeleteKey(optEvt)
   {
+    //console.log('doDeleteKey rep.selStart = ', rep.selStart);
+
     var evt = optEvt || {};
     var handled = false;
     if (rep.selStart)
@@ -3496,6 +3498,10 @@ function Ace2Inner(){
         var col = caretColumn();
         var lineEntry = rep.lines.atIndex(lineNum);
         var lineText = lineEntry.text;
+
+        //console.log('doDeleteKey lineEntry = ', lineEntry);
+        //console.log('doDeleteKey lineText = ', lineText);
+
         var lineMarker = lineEntry.lineMarker;
         if (/^ +$/.exec(lineText.substring(lineMarker, col)))
         {
@@ -3567,14 +3573,54 @@ function Ace2Inner(){
               else
               {
                 // normal delete
+                //console.log('doDeleteKey normal Delete');
                 performDocumentReplaceCharRange(docChar - 1, docChar, '');
               }
+
+              // JOE delete hack for hitting the backspace with NO selection
+              // hook added by joe
+              // you COULD use this for other things besides duration but BE careful!
+              try {
+                  hooks.callAll('aceDeleteKeyPost', {
+                    callstack: currentCallStack,
+                    rep: rep,
+                    editorInfo: editorInfo,
+                    documentAttributeManager: documentAttributeManager,
+                    positionJustDeleted: (docChar - 1),
+                    isSelection: false,
+                    NPR_hook: true
+                  });
+              }
+              catch(ex) {
+                  console.error(ex);
+                  console.error('Plugin error in aceDeleteKeyPost. Swallowing the exception');
+              }
+
             }
           }
         }
         else
         {
+          //console.log('doDeleteKey a selection ', rep.selStart, rep.selEnd);
           performDocumentReplaceSelection('');
+
+          // JOE delete hack for hitting the backspace WITH a selection
+          // hook added by joe
+          try {
+              hooks.callAll('aceDeleteKeyPost', {
+                  callstack: currentCallStack,
+                  rep: rep,
+                  editorInfo: editorInfo,
+                  documentAttributeManager: documentAttributeManager,
+                  positionJustDeleted: rep.selStart[1],
+                  isSelection: true,
+                  NPR_hook: true
+              });
+          }
+          catch(ex) {
+              console.error(ex);
+              console.error('Plugin error in aceDeleteKeyPost. Swallowing the exception');
+          }
         }
       }
     }
@@ -4728,6 +4774,56 @@ function Ace2Inner(){
             diveDeep();
           }
         }
+
+        // this is joe's hack to make sure the cursor does not get stuck or stop
+        // inside the duration tag.
+        if (ENABLE_DURATION_HACK) {
+
+            var isInCanvasTag = p.node.parentNode && p.node.parentNode.tagName === 'CANVAS';
+            if (isInCanvasTag && direction && p.node.parentNode) {
+              //console.log('The caret is in the duration canvas with isNodeText(p.node) = ', isNodeText(p.node));
+
+              var container = p.node.parentNode;
+              var offset = childIndex(p.node) + p.index;
+              var canvas = p.node.parentNode;
+
+              if (direction === 'left') {
+                  if (canvas.parentNode && canvas.parentNode.previousSibling) {
+                      console.log('jumping to next previousSibling = ', canvas.parentNode.previousSibling);
+                      container = canvas.parentNode.previousSibling;
+                      offset = 1; // 1 for end of container
+                  } else {
+                    if (canvas.parentNode && canvas.parentNode.parentNode &&  canvas.parentNode.parentNode.previousSibling) {
+                      console.log('jumping to next grand previousSibling = ', canvas.parentNode.parentNode.previousSibling);
+                      container = canvas.parentNode.parentNode.previousSibling;
+                      offset = 1;
+                    }
+                  }
+              }
+              else { // direction right is assumed
+
+                  if (canvas.parentNode && canvas.parentNode.nextSibling) {
+                      console.log('jumping to next sibling = ', canvas.parentNode.nextSibling);
+                      container = canvas.parentNode.nextSibling;
+                      offset = 0; // 0 for beginning of container
+                  } else {
+                     if (canvas.parentNode && canvas.parentNode.parentNode && canvas.parentNode.parentNode.nextSibling) {
+                        console.log('jumping to next grand sibling = ', canvas.parentNode.parentNode.nextSibling);
+                        container = canvas.parentNode.parentNode.nextSibling;
+                        offset = 0;
+                     }
+                  }
+              }
+
+              return {
+                  container: container,
+                  offset: offset
+              }
+            }
+
+        } // end of ENABLE_DURATION_HACK
+
+
         if (isNodeText(p.node))
         {
 
@@ -4739,46 +4835,10 @@ function Ace2Inner(){
         else
         {
 
-          // this is joe's hack to make sure the cursor does not get stuck or stop
-          // inside the duration tag.
-          var container = p.node.parentNode;
-          var offset = childIndex(p.node) + p.index;
-
-          if (ENABLE_DURATION_HACK) {
-              if (p.node && p.node.tagName === 'CANVAS') {
-                  //console.log('The caret is in the duration canvas');
-
-                  // if we are inside the canvas tag and going "right"
-                  // we will jump the tag but finding the parent's next sibling and
-                  // attempting to select that.
-                  if (direction === 'right') {
-                    if (p.node.parentNode) {
-                        var parent = p.node.parentNode;
-                        if (parent.parentNode) {
-                            //console.log('parent.parentNode = ', parent.parentNode);
-                            //console.log('parent.parentNode.nextSibling = ', parent.parentNode.nextSibling);
-                            if (parent.parentNode.nextSibling){
-                                container = parent.parentNode.nextSibling.firstChild;
-                                offset = 1;
-                                //console.log('jump to ', parent.parentNode.nextSibling.firstChild);
-                            }else {
-                                // there are no ndoes after the duration. so no text or extra spaces
-                                // after the duration. in this case we have to leave the cursor on the
-                                // duration placeholder
-                                container = parent.parentNode;
-                                offset = 1;
-                                //console.log('jump to ', parent.parentNode);
-                            }
-                        }
-                    }
-                }
-             }
-          } // end ENABLE_DURATION_HACK test
-
           // p.index in {0,1}
           return {
-            container: container,
-            offset: offset
+            container: p.node.parentNode,
+            offset: childIndex(p.node) + p.index
           };
         }
       }
