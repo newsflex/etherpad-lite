@@ -3579,14 +3579,15 @@ function Ace2Inner(){
 
               // JOE delete hack for hitting the backspace with NO selection
               // hook added by joe
-              // you COULD use this for other things besides duration but BE careful!
               try {
+                  var repDeleted = lineAndColumnFromChar(docChar - 1);
                   hooks.callAll('aceDeleteKeyPost', {
                     callstack: currentCallStack,
                     rep: rep,
                     editorInfo: editorInfo,
                     documentAttributeManager: documentAttributeManager,
-                    positionJustDeleted: (docChar - 1),
+                    startRepJustDeleted: repDeleted,
+                    endRepJustDeleted: repDeleted, //same as start since no selection
                     isSelection: false,
                     NPR_hook: true
                   });
@@ -3601,6 +3602,11 @@ function Ace2Inner(){
         }
         else
         {
+
+          //joe: make copies before we do anything.
+          var startRepJustDeleted = rep.selStart.slice();
+          var endRepJustDeleted = rep.selEnd.slice();
+
           //console.log('doDeleteKey a selection ', rep.selStart, rep.selEnd);
           performDocumentReplaceSelection('');
 
@@ -3612,7 +3618,8 @@ function Ace2Inner(){
                   rep: rep,
                   editorInfo: editorInfo,
                   documentAttributeManager: documentAttributeManager,
-                  positionJustDeleted: rep.selStart[1],
+                  startRepJustDeleted: startRepJustDeleted,
+                  endRepJustDeleted: endRepJustDeleted,
                   isSelection: true,
                   NPR_hook: true
               });
