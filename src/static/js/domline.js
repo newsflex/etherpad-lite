@@ -109,13 +109,13 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       firstItem = newLineData[0];
   }
 
-  console.log('acePreCreateDomLine newLineData = ', newLineData);
+  //console.log('acePreCreateDomLine newLineData = ', newLineData);
 
   // added by joe
   if (firstItem) {
       _.each(firstItem.attributes, function(c) {
           if (c && c > '') {
-              console.log('applying default current style =', c);
+              //console.log('domeline.js applying default current style =', c);
               lineClass += ' ' + c;
           }
       });
@@ -124,14 +124,14 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       if (firstItem.style) {
           inlineStyle = firstItem.style;
       }
-      console.log('inlineStyle =', inlineStyle);
+      //console.log('domeline.js inlineStyle =', inlineStyle);
   }
 
 
   result.appendSpan = function(txt, cls)
   {
 
-      console.log('appendSpan txt= %s cls = %s', txt, cls);
+    //console.log('appendSpan txt= %s cls = %s', txt, cls);
     var processedMarker = false;
     // Handle lineAttributeMarker, if present
     if (cls.indexOf(lineAttributeMarker) >= 0)
@@ -244,7 +244,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
         simpleTags.reverse();
         extraCloseTags = '</' + simpleTags.join('></') + '>' + extraCloseTags;
       }
-      console.log('domline.js creating span with cls = %s and text = %s', cls, txt);
+      //console.log('domline.js creating span with cls = %s and text = %s', cls, txt);
       html.push('<span class="', Security.escapeHTMLAttribute(cls || ''), '">', extraOpenTags, perTextNodeProcess(Security.escapeHTML(txt)), extraCloseTags, '</span>');
     }
   };
