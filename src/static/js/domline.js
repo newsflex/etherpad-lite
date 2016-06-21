@@ -94,27 +94,38 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
   var perHtmlLineProcess = (doesWrap ? processSpaces : _.identity);
 
   var lineClass = 'ace-line';
+  var inlineStyle = null;
 
- // added by joe
- //if (!nonEmpty) {
-      var newClasses = hooks.callAll("acePreCreateDomLine", {
-        documet_body: document.body,
-        NPR_hook: true
+  // added by joe
+  var newLineData = hooks.callAll("acePreCreateDomLine", {
+    documet_body: document.body,
+    NPR_hook: true,
+    isEmpty: !nonEmpty
+  });
+
+  var firstItem = null;
+  // hook normalizes into an array but we only need the first item
+  if (newLineData && newLineData[0]) {
+      firstItem = newLineData[0];
+  }
+
+  console.log('acePreCreateDomLine newLineData = ', newLineData);
+
+  // added by joe
+  if (firstItem) {
+      _.each(firstItem.attributes, function(c) {
+          if (c && c > '') {
+              console.log('applying default current style =', c);
+              lineClass += ' ' + c;
+          }
       });
 
-      console.log('acePreCreateDomLine newClasses = ', newClasses);
-
-    // added by joe
-    // only do for new lines (nonEmpty = false)
-    if (newClasses) {
-          _.each(newClasses, function(c) {
-              if (c && c > '') {
-                  console.log('applying default current style =', c);
-                  lineClass += ' ' + c;
-              }
-          });
+      // used to style the empty div to make the cusor appear correctly
+      if (firstItem.style) {
+          inlineStyle = firstItem.style;
       }
-  //}
+      console.log('inlineStyle =', inlineStyle);
+  }
 
 
   result.appendSpan = function(txt, cls)
@@ -269,6 +280,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       result.node.innerHTML = curHTML;
     }
     if (lineClass !== null) result.node.className = lineClass;
+    if (inlineStyle !== null) result.node.style.cssText = inlineStyle;
 
     hooks.callAll("acePostWriteDomLineHTML", {
       node: result.node
