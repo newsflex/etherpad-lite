@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -66,6 +66,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
   };
 
   var document = optDocument;
+  //console.log('document = ', optDocument);
 
   if (document)
   {
@@ -91,11 +92,35 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
 
   var perTextNodeProcess = (doesWrap ? _.identity : processSpaces);
   var perHtmlLineProcess = (doesWrap ? processSpaces : _.identity);
+
   var lineClass = 'ace-line';
+
+ // added by joe
+ //if (!nonEmpty) {
+      var newClasses = hooks.callAll("acePreCreateDomLine", {
+        documet_body: document.body,
+        NPR_hook: true
+      });
+
+      console.log('acePreCreateDomLine newClasses = ', newClasses);
+
+    // added by joe
+    // only do for new lines (nonEmpty = false)
+    if (newClasses) {
+          _.each(newClasses, function(c) {
+              if (c && c > '') {
+                  console.log('applying default current style =', c);
+                  lineClass += ' ' + c;
+              }
+          });
+      }
+  //}
+
 
   result.appendSpan = function(txt, cls)
   {
 
+      console.log('appendSpan txt= %s cls = %s', txt, cls);
     var processedMarker = false;
     // Handle lineAttributeMarker, if present
     if (cls.indexOf(lineAttributeMarker) >= 0)
@@ -135,7 +160,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
             }
             postHtml += '</li></ol>';
           }
-        } 
+        }
         processedMarker = true;
       }
       _.map(hooks.callAll("aceDomLineProcessLineAttributes", {
@@ -150,7 +175,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       if( processedMarker ){
         result.lineMarker += txt.length;
         return; // don't append any text
-      } 
+      }
     }
     var href = null;
     var simpleTags = null;
@@ -208,6 +233,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
         simpleTags.reverse();
         extraCloseTags = '</' + simpleTags.join('></') + '>' + extraCloseTags;
       }
+      console.log('domline.js creating span with cls = %s and text = %s', cls, txt);
       html.push('<span class="', Security.escapeHTMLAttribute(cls || ''), '">', extraOpenTags, perTextNodeProcess(Security.escapeHTML(txt)), extraCloseTags, '</span>');
     }
   };

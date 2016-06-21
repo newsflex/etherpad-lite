@@ -1384,6 +1384,8 @@ function Ace2Inner(){
     }
     else
     {
+        console.log('observeChangesAroundNode node is dirty ');
+        console.dir(node);
       // node is dirty, look for clean node above
       var upNode = node.previousSibling;
       while (upNode && isNodeDirty(upNode))
@@ -1408,7 +1410,7 @@ function Ace2Inner(){
       }
       if (!cleanNode)
       {
-        // Couldn't find any adjacent clean nodes!
+        console.log('Couldnt find any adjacent clean nodes!');
         // Since top and bottom of doc is dirty, the dirty area will be detected.
         return;
       }
@@ -1594,6 +1596,8 @@ function Ace2Inner(){
             catch (e)
             {}
           }
+          console.log('collecting content on n = ');
+          console.dir(n);
           cc.collectContent(n);
           dirtyNodes.push(n);
         }
@@ -1643,6 +1647,7 @@ function Ace2Inner(){
         for (var k = 0; k < lines.length; k++)
         {
           var lineString = lines[k];
+          console.log('lineString = ', lineString);
           var newEntry = createDomLineEntry(lineString);
           entries.push(newEntry);
           lineNodeInfos[k] = newEntry.domInfo;
@@ -2512,7 +2517,6 @@ function Ace2Inner(){
 
   function doRepLineSplice(startLine, deleteCount, newLineEntries)
   {
-
     _.each(newLineEntries, function(entry)
     {
       entry.width = entry.text.length + 1;
@@ -2542,7 +2546,6 @@ function Ace2Inner(){
 
   function doIncorpLineSplice(startLine, deleteCount, newLineEntries, lineAttribs, hints)
   {
-
     var startOldChar = rep.lines.offsetOfIndex(startLine);
     var endOldChar = rep.lines.offsetOfIndex(startLine + deleteCount);
 

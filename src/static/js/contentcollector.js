@@ -125,6 +125,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
       },
       startNew: function()
       {
+          console.log('startNew');
         textArray.push("");
         self.flush(true);
         attribsBuilder = Changeset.smartOpAssembler();
@@ -135,6 +136,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
       },
       appendText: function(txt, attrString)
       {
+          console.log('appendText txt=%s attrString= %s', txt, attrString);
         textArray[textArray.length - 1] += txt;
         //dmesg(txt+" / "+attrString);
         op.attribs = attrString;
