@@ -1914,11 +1914,30 @@ function Ace2Inner(){
       {
         theIndent += THE_TAB;
       }
+
+      var attributes = [['author', thisAuthor]];
+
+      // added by joe: if we are going to indent with spaces
+      // be sure to bring along the attributes by allowing the hook to provide
+      // any current attributes to apply along with author
+      try {
+          // only run hook if we are actually doing an indent
+          if (shouldIndent && theIndent > '') {
+              var attributesForIndent = hooks.callAll('acePreIndentWithSpaces', {
+                  NPR_hook: true
+              });
+              console.log('ace indent will also apply ', JSON.stringify(attributesForIndent));
+              _.each(attributesForIndent || [], function(a) {
+                  attributes.push(a);
+              });
+        }
+     } catch (ex) {
+         logger.error('custom NPR hook crashed. silently continuing.');
+     }
+
       var cs = Changeset.builder(rep.lines.totalWidth()).keep(
       rep.lines.offsetOfIndex(lineNum), lineNum).insert(
-      theIndent, [
-        ['author', thisAuthor]
-      ], rep.apool).toString();
+      theIndent, attributes, rep.apool).toString();
       performDocumentApplyChangeset(cs);
       performSelectionChange([lineNum, theIndent.length], [lineNum, theIndent.length]);
     }
