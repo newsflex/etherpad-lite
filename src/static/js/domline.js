@@ -223,7 +223,9 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
   result.clearSpans = function()
   {
     html = [];
-    lineClass = ''; // non-null to cause update
+    // joe added ace-line instead of empty string '' because
+    // we always want an ace-line to be there.
+    lineClass = 'ace-line'; // non-null to cause update
     result.lineMarker = 0;
   };
 
@@ -254,7 +256,9 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
     if (lineClass !== null) result.node.className = lineClass;
 
     hooks.callAll("acePostWriteDomLineHTML", {
-      node: result.node
+      node: result.node,
+      // added by joe
+      isEmpty: !nonEmpty
     });
   }
   result.prepareForAdd = writeHTML;
