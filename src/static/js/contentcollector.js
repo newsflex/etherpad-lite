@@ -23,6 +23,8 @@
  * limitations under the License.
  */
 
+var ENABLE_NPR_FONT_STYLES = true;
+
 var _MAX_LIST_LEVEL = 16;
 
 var UNorm = require('unorm');
@@ -537,19 +539,39 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
           });
           if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
           {
-            cc.doAttrib(state, "bold");
+            // joe was here
+            if (ENABLE_NPR_FONT_STYLES) {
+              cc.doAttrib(state, "font-weight::bold");
+            } else {
+              cc.doAttrib(state, "bold");
+            }
           }
           if (tname == "i" || (styl && /\bfont-style:\s*italic\b/i.exec(styl)) || tname == "em")
           {
-            cc.doAttrib(state, "italic");
+              // joe was here
+              if (ENABLE_NPR_FONT_STYLES) {
+                cc.doAttrib(state, "font-style::italic");
+              } else {
+                cc.doAttrib(state, "italic");
+              }
           }
           if (tname == "u" || (styl && /\btext-decoration:\s*underline\b/i.exec(styl)) || tname == "ins")
           {
-            cc.doAttrib(state, "underline");
+              // joe was here
+              if (ENABLE_NPR_FONT_STYLES) {
+                cc.doAttrib(state, "text-decoration::underline");
+              } else {
+                cc.doAttrib(state, "underline");
+              }
           }
           if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del")
           {
-            cc.doAttrib(state, "strikethrough");
+              // joe was here
+              if (ENABLE_NPR_FONT_STYLES) {
+                cc.doAttrib(state, "text-decoration-strikethough::line-through");
+              } else {
+                cc.doAttrib(state, "strikethrough");
+              }
           }
           if (tname == "ul" || tname == "ol")
           {

@@ -365,6 +365,16 @@ function Ace2Inner(){
     return colorutils.triple2css(color);
   }
 
+  // added by Joe
+  editorInfo.ace_getDocumentAttributeManager = function() {
+      return documentAttributeManager;
+  }
+
+  editorInfo.ace_getDocumentAttributeManager = function()
+  {
+    return documentAttributeManager;
+  };
+
   editorInfo.ace_getRep = function()
   {
     return rep;
@@ -3812,6 +3822,8 @@ function Ace2Inner(){
           specialHandled = _.contains(specialHandledInHook, true);
         }
 
+        //console.log('aceKeyEvent specialHandled = ', specialHandled);
+
         if ((!specialHandled) && altKey && isTypeForSpecialKey && keyCode == 120){
           // Alt F9 focuses on the File Menu and/or editbar.
           // Note that while most editors use Alt F10 this is not desirable
@@ -3990,6 +4002,7 @@ function Ace2Inner(){
         if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "b" && (evt.metaKey || evt.ctrlKey))
         {
           // cmd-B (bold)
+          console.log('running etherpad-lite bold shortcut');
           fastIncorp(13);
           evt.preventDefault();
           toggleAttributeOnSelection('bold');
