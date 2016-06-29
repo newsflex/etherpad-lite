@@ -512,9 +512,10 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
           cc.startNewLine(state);
         }
       }
-      else if (tname == "script" || tname == "style")
+      else if (tname == "script" || tname == "style" || tname === 'meta' || tname === 'head')
       {
         // ignore
+        console.log('CC ignoring %s', tname);
       }
       else if (!isEmpty)
       {
@@ -566,11 +567,12 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
                 cc.doAttrib(state, "underline");
               }
           }
-          if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del")
+          // joe added strike even though it is obsolete. Tern exports it
+          if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del" || tname == "strike")
           {
               // joe was here
               if (ENABLE_NPR_FONT_STYLES) {
-                cc.doAttrib(state, "text-decoration-strikethough::line-through");
+                cc.doAttrib(state, "text-decoration-strikethrough::line-through");
               } else {
                 cc.doAttrib(state, "strikethrough");
               }
