@@ -535,7 +535,9 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
             state: state,
             tname: tname,
             styl: styl,
-            cls: cls
+            cls: cls,
+            // added by joe to handle <font> node
+            node: node
           });
           if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
           {
