@@ -185,6 +185,19 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       extraOpenTags = extraOpenTags + modifier.extraOpenTags;
       extraCloseTags = modifier.extraCloseTags + extraCloseTags;
 
+      // added by joe
+      parentCls = modifier.parentCls;
+
+      // added by joe
+      if (modifier.parentCls) {
+          // if we already have an alignment replace it
+          if (lineClass.indexOf('align-') > -1) {
+              lineClass = lineClass.replace(/align-[a-z]+/, modifier.parentCls);
+          } else {
+              lineClass = lineClass + ' ' + modifier.parentCls;
+          }
+      }
+
       //joe: allow inline css styles to be passed back in addition to tags
       if (modifier.extraStyles) {
         extraStyles = modifier.extraStyles + (extraStyles || '');
