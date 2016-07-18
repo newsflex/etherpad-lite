@@ -519,6 +519,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
       }
       else if (!isEmpty)
       {
+          console.dir(node);
         var styl = dom.nodeAttr(node, "style");
         var cls = dom.nodeAttr(node, "class");
         var isPre = (tname == "pre");
@@ -540,41 +541,51 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
             // added by joe to handle <font> node
             node: node
           });
-          if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
-          {
-            // joe was here
-            if (ENABLE_NPR_FONT_STYLES) {
-              cc.doAttrib(state, "font-weight::bold");
-            } else {
-              cc.doAttrib(state, "bold");
-            }
-          }
-          if (tname == "i" || (styl && /\bfont-style:\s*italic\b/i.exec(styl)) || tname == "em")
-          {
-              // joe was here
-              if (ENABLE_NPR_FONT_STYLES) {
-                cc.doAttrib(state, "font-style::italic");
-              } else {
-                cc.doAttrib(state, "italic");
+
+          // joe: we want to avoid ace-line content. If we don't have this
+          // if test then we end up with duplicate bolds and such on paste events
+          var isAceLine = tname.toLowerCase() === 'div' && cls.indexOf('ace-line') > -1;
+          if (!isAceLine) {
+              if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
+              {
+                // joe was here
+                if (ENABLE_NPR_FONT_STYLES) {
+                  console.log('etherpad-light %s %s cc.DoAttrib "font-weight::bold"', tname, styl);
+                  cc.doAttrib(state, "font-weight::bold");
+                } else {
+                  cc.doAttrib(state, "bold");
+                }
               }
-          }
-          if (tname == "u" || (styl && /\btext-decoration:\s*underline\b/i.exec(styl)) || tname == "ins")
-          {
-              // joe was here
-              if (ENABLE_NPR_FONT_STYLES) {
-                cc.doAttrib(state, "text-decoration::underline");
-              } else {
-                cc.doAttrib(state, "underline");
+              if (tname == "i" || (styl && /\bfont-style:\s*italic\b/i.exec(styl)) || tname == "em")
+              {
+                  // joe was here
+                  if (ENABLE_NPR_FONT_STYLES) {
+                    console.log('etherpad-light cc.DoAttrib "font-style::italic"');
+                    cc.doAttrib(state, "font-style::italic");
+                  } else {
+                    cc.doAttrib(state, "italic");
+                  }
               }
-          }
-          // joe added strike even though it is obsolete. Tern exports it
-          if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del" || tname == "strike")
-          {
-              // joe was here
-              if (ENABLE_NPR_FONT_STYLES) {
-                cc.doAttrib(state, "text-decoration-strikethrough::line-through");
-              } else {
-                cc.doAttrib(state, "strikethrough");
+              if (tname == "u" || (styl && /\btext-decoration:\s*underline\b/i.exec(styl)) || tname == "ins")
+              {
+                  // joe was here
+                  if (ENABLE_NPR_FONT_STYLES) {
+                    console.log('etherpad-light cc.DoAttrib "text-decoration::underline"');
+                    cc.doAttrib(state, "text-decoration::underline");
+                  } else {
+                    cc.doAttrib(state, "underline");
+                  }
+              }
+              // joe added strike even though it is obsolete. Tern exports it
+              if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del" || tname == "strike")
+              {
+                  // joe was here
+                  if (ENABLE_NPR_FONT_STYLES) {
+                    console.log('etherpad-light cc.DoAttrib "text-decoration-strikethrough::line-through"');
+                    cc.doAttrib(state, "text-decoration-strikethrough::line-through");
+                  } else {
+                    cc.doAttrib(state, "strikethrough");
+                  }
               }
           }
           if (tname == "ul" || tname == "ol")
