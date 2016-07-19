@@ -129,30 +129,30 @@
             <div class="column">
                 <% e.begin_block("mySettings"); %>
                 <h2 data-l10n-id="pad.settings.myView"></h2>
-                <p>
+                <p id="stickychat">
                     <input type="checkbox" id="options-stickychat" onClick="chat.stickToScreen();">
                     <label for="options-stickychat" data-l10n-id="pad.settings.stickychat"></label>
                 </p>
-                <p>
+                <p id="chatandusers">
                     <input type="checkbox" id="options-chatandusers" onClick="chat.chatAndUsers();">
                     <label for="options-chatandusers" data-l10n-id="pad.settings.chatandusers"></label>
                 </p>
-                <p>
+                <p id="authorshipcolors">
                     <input type="checkbox" id="options-colorscheck">
                     <label for="options-colorscheck" data-l10n-id="pad.settings.colorcheck"></label>
                 </p>
-                <p>
+                <p id="lineNumbers">
                     <input type="checkbox" id="options-linenoscheck" checked>
                     <label for="options-linenoscheck" data-l10n-id="pad.settings.linenocheck"></label>
                 </p>
-                <p>
+                <p id="rightToLeft">
                     <input type="checkbox" id="options-rtlcheck">
                     <label for="options-rtlcheck" data-l10n-id="pad.settings.rtlcheck"></label>
                 </p>
                 <% e.end_block(); %>
                 <table>
                     <% e.begin_block("mySettings.dropdowns"); %>
-                    <tr>
+                    <tr id="tr-fontmenu">
                         <td>
                             <label for="viewfontmenu" data-l10n-id="pad.settings.fontType">Font type:</label>
                         </td>
@@ -179,7 +179,7 @@
                             </select>
                         </td>
                     </tr>
-                    <tr>
+                    <tr id="tr-language">
                         <td>
                             <label for="languagemenu" data-l10n-id="pad.settings.language">Language:</label>
                         </td>
