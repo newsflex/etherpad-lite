@@ -544,7 +544,15 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
 
           // joe: we want to avoid ace-line content. If we don't have this
           // if test then we end up with duplicate bolds and such on paste events
-          var isAceLine = tname.toLowerCase() === 'div' && cls.indexOf('ace-line') > -1;
+          var isAceLine = false;
+
+          /// be safe about it. errors here would break import html aka Opening pad
+          try {
+              isAceLine = (tname || '').toLowerCase() === 'div' && (cls || '').indexOf('ace-line') > -1;
+          } catch(ex) {
+              console.warn(ex);
+          }
+
           if (!isAceLine) {
               if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
               {
