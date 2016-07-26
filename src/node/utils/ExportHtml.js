@@ -447,14 +447,29 @@ function getHTMLFromAtext(pad, atext, authorColors)
         apool: apool,
         attribLine: attribLines[i],
         text: textLines[i],
-        padId: pad.id
+        padId: pad.id,
+
+        // added by Joe for styles that need
+        // to be applied to entire Block (p or div)
+        // like line-height and text-align
+        blockStyles: []
       }
 
+      //console.log('getLineHTMLForExport context', context);
       var lineContentFromHook = hooks.callAllStr("getLineHTMLForExport", context, " ", " ", "");
+      //console.log('context.blockStyles =', context.blockStyles);
 
-      if (lineContentFromHook)
-      {
-        pieces.push(lineContentFromHook, '<br>');
+      if (lineContentFromHook) {
+        // joe changes
+        var cssText = "";
+        if (context.blockStyles.length > 0) {
+            _.each(context.blockStyles, function appendCss(s) {
+                cssText = cssText + s.style + ':' + s.value + ';';
+            });
+        }
+        //console.log('cssText=', cssText);
+        var openingDiv = '<div style="{0}">'.replace("{0}", cssText);
+        pieces.push(openingDiv, lineContentFromHook, '</div>');
       }
       else
       {
