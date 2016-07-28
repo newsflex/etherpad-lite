@@ -519,7 +519,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
       }
       else if (!isEmpty)
       {
-          console.dir(node);
+        //console.dir(node);
         var styl = dom.nodeAttr(node, "style");
         var cls = dom.nodeAttr(node, "class");
         var isPre = (tname == "pre");
