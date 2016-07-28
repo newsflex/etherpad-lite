@@ -468,7 +468,12 @@ function getHTMLFromAtext(pad, atext, authorColors)
                 cssText = cssText + s.style + ':' + s.value + ';';
             });
         }
-        //console.log('cssText=', cssText);
+
+        if (lineContentFromHook.length === 1 && lineContentFromHook[0] === '') {
+            // just for tern!
+            lineContentFromHook = '<br />';
+        }
+
         var openingDiv = '<div style="{0}">'.replace("{0}", cssText);
         pieces.push(openingDiv, lineContentFromHook, '</div>');
       }
