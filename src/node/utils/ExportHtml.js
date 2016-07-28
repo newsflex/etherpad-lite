@@ -455,9 +455,10 @@ function getHTMLFromAtext(pad, atext, authorColors)
         blockStyles: []
       }
 
-      //console.log('getLineHTMLForExport context', context);
-      var lineContentFromHook = hooks.callAllStr("getLineHTMLForExport", context, " ", " ", "");
-      //console.log('context.blockStyles =', context.blockStyles);
+      // changed pre and post args form " " to "" because I didn't want the extra
+      // spaces. -Joe
+      var lineContentFromHook = hooks.callAllStr("getLineHTMLForExport", context, "", "", "");
+      console.log('getLineHTMLForExport =', lineContentFromHook);
 
       if (lineContentFromHook) {
         // joe changes
