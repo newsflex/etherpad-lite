@@ -516,8 +516,6 @@ exports.getPadHTMLDocument = function (padId, revNum, noDocType, callback)
           '<meta name="changedby" content="Etherpad">\n' +
           '<meta charset="utf-8">\n' +
           '<style> * { font-family: arial, sans-serif;\n' +
-            'font-size: 13px;\n' +
-            'line-height: 17px; }' +
             'ul.indent { list-style-type: none; }' +
 
             'ol { list-style-type: none; padding-left:0;}' +
