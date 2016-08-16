@@ -601,8 +601,10 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
       if (bgcolor && dynamicCSS)
       {
         var selector = dynamicCSS.selectorStyle('.' + linestylefilter.getAuthorClassName(author));
-        selector.backgroundColor = bgcolor
-        selector.color = (colorutils.luminosity(colorutils.css2triple(bgcolor)) < 0.5) ? '#ffffff' : '#000000'; //see ace2_inner.js for the other part
+        // added by Joe to make author colors use underline instead of backgroudn color
+        //selector.backgroundColor = bgcolor;
+        //selector.color = (colorutils.luminosity(colorutils.css2triple(bgcolor)) < 0.5) ? '#ffffff' : '#000000'; //see ace2_inner.js for the other part
+        selector.borderBottom = "2px solid " + bgcolor;
       }
       authorData[author] = data;
     }
