@@ -245,10 +245,12 @@ function Ace2Editor()
         throw new Error("Require kernel could not be found.");
       }
 
+      var ep_npr_version = Ace2Editor.ep_npr_version;
+
       iframeHTML.push(scriptTag(
 Ace2Editor.EMBEDED[KERNEL_SOURCE] + '\n\
-require.setRootURI("../javascripts/src");\n\
-require.setLibraryURI("../javascripts/lib");\n\
+require.setRootURI("../javascripts/' + ep_npr_version + '/src");\n\
+require.setLibraryURI("../javascripts/' + ep_npr_version + '/lib");\n\
 require.setGlobalKeyPath("require");\n\
 \n\
 var hooks = require("ep_etherpad-lite/static/js/pluginfw/hooks");\n\

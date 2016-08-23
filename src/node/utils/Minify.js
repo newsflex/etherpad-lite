@@ -1,7 +1,7 @@
 /**
- * This Module manages all /minified/* requests. It controls the 
- * minification && compression of Javascript and CSS. 
- */ 
+ * This Module manages all /minified/* requests. It controls the
+ * minification && compression of Javascript and CSS.
+ */
 
 /*
  * 2011 Peter 'Pita' Martischka (Primary Technology Ltd)
@@ -151,7 +151,7 @@ function minify(req, res, next)
   } else {
     res.writeHead(404, {});
     res.end();
-    return; 
+    return;
   }
 
   /* Handle static files for plugins/libraries:
@@ -258,6 +258,9 @@ function getAceFile(callback) {
 
     data += ';\n';
     data += 'Ace2Editor.EMBEDED = Ace2Editor.EMBEDED || {};\n';
+
+    // joe need to expose server side settings for cache busting
+    data += 'Ace2Editor.ep_npr_version = "' + settings.ep_npr_version + '";\n';
 
     // Request the contents of the included file on the server-side and write
     // them into the file.

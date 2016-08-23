@@ -209,6 +209,9 @@ exports.requireAuthentication = false;
 exports.requireAuthorization = false;
 exports.users = {};
 
+
+exports.ep_npr_version = "0.0";
+
 //checks if abiword is avaiable
 exports.abiwordAvailable = function()
 {
