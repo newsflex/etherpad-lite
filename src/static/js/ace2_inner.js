@@ -5705,6 +5705,31 @@ function Ace2Inner(){
     });
   }
 
+  editorInfo.ace_getSelectedText =  function()
+  {
+    if (!(rep.selStart && rep.selEnd)) return;
+
+    var selection = '';
+    var selStartLine = rep.selStart[0];
+    var selEndLine = rep.selEnd[0];
+    for (var n = selStartLine; n <= selEndLine; n++)
+    {
+      var selectionEndInLine = rep.lines.atIndex(n).text.length; // exclude newline
+
+      if (n == selStartLine)
+      {
+        selection += rep.lines.atIndex(n).text.substring(rep.selStart[1]);
+      }else if (n == selEndLine)
+      {
+        selection += rep.lines.atIndex(n).text.substring(0,rep.selEnd[1]);
+      }else {
+        selection += rep.lines.atIndex(n).text;
+      }
+    }
+
+    return selection;
+  };
+
 }
 
 exports.init = function () {
