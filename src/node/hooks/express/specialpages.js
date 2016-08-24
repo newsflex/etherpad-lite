@@ -7,7 +7,12 @@ var settings = require('../../utils/Settings');
 exports.expressCreateServer = function (hook_name, args, cb) {
   // expose current stats
   args.app.get('/stats', function(req, res) {
-    res.json(require('ep_etherpad-lite/node/stats').toJSON())
+      var statsData = require('ep_etherpad-lite/node/stats').toJSON();
+      // would be nice to see our version number
+      statsData.ep_npr_version = settings.ep_npr_version;
+      statsData.ep_npr_build_date = settings.ep_npr_build_date || '';
+      statsData.ep_npr_build_number = settings.ep_npr_build_number || '';
+      res.json(statsData);
   })
 
   //serve index.html under /
