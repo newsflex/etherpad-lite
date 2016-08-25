@@ -5712,6 +5712,13 @@ function Ace2Inner(){
     var selection = '';
     var selStartLine = rep.selStart[0];
     var selEndLine = rep.selEnd[0];
+
+    if (selStartLine === selEndLine){
+      selection = rep.lines.atIndex(selEndLine).text.substring(rep.selStart[1],rep.selEnd[1]);
+      return selection;
+    }
+
+
     for (var n = selStartLine; n <= selEndLine; n++)
     {
       var selectionEndInLine = rep.lines.atIndex(n).text.length; // exclude newline
