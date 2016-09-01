@@ -231,8 +231,11 @@ function handshake()
     // Allow deployers to host Etherpad on a non-root path
     'path': exports.baseURL + "socket.io",
     'resource': resource,
-    'max reconnection attempts': 3,
-    'sync disconnect on unload' : false
+    'sync disconnect on unload' : false,
+    'reconnection': true,
+    'reconnectionDelay': 500,
+    'reconnectionDelayMax' : 5000,
+    'reconnectionAttempts': 5
   });
 
   var disconnectTimeout;
