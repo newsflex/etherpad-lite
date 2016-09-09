@@ -4118,17 +4118,18 @@ function Ace2Inner(){
 
           }, 200);
         }
+
+        // hack by joe for duration cursor.
+        // we need to keep track of current direction
+        // inside a global direction var
+        if (evt.which == 37) direction = 'left';
+        else if (evt.which == 39) direction = 'right';
+        else direction = '';
+
         /* Attempt to apply some sanity to cursor handling in Chrome after a copy / paste event
            We have to do this the way we do because rep. doesn't hold the value for keyheld events IE if the user
            presses and holds the arrow key ..  Sorry if this is ugly, blame Chrome's weird handling of viewports after new content is added*/
         if((evt.which == 37 || evt.which == 38 || evt.which == 39 || evt.which == 40) && browser.chrome){
-
-          // hack by joe for duration cursor.
-          // we need to keep track of current direction
-          // inside a global direction var
-          if (evt.which == 37) direction = 'left';
-          else if (evt.which == 39) direction = 'right';
-          else direction = '';
 
           var viewport = getViewPortTopBottom();
           var myselection = document.getSelection(); // get the current caret selection, can't use rep. here because that only gives us the start position not the current
