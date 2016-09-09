@@ -477,7 +477,7 @@ var paduserlist = (function()
         $("#myusernameedit").addClass('myusernameedithoverable');
         setUpEditable($("#myusernameedit"), function()
         {
-          return myUserInfo.name || '';
+          return myUserInfo.name.split(",",1) || '';
         }, function(newValue)
         {
           myUserInfo.name = newValue;
@@ -742,7 +742,7 @@ var paduserlist = (function()
     {
       if (myUserInfo.name)
       {
-        $("#myusernameedit").removeClass("editempty").val(myUserInfo.name);
+        $("#myusernameedit").removeClass("editempty").val(myUserInfo.name.split(",",1));
       }
       else
       {
