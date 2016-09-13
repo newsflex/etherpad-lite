@@ -782,6 +782,7 @@ var pad = {
     }
     else if (newState == "DISCONNECTED")
     {
+      hooks.aCallAll("postAceDisconnected", {NPR_hook: true});
       pad.diagnosticInfo.disconnectedMessage = message;
       pad.diagnosticInfo.padId = pad.getPadId();
       pad.diagnosticInfo.socket = {};
