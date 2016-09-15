@@ -772,13 +772,21 @@ var pad = {
   {
     var oldFullyConnected = !! padconnectionstatus.isFullyConnected();
     var wasConnecting = (padconnectionstatus.getStatus().what == 'connecting');
+    console.log('socket state changed to:', newState);
     if (newState == "CONNECTED")
     {
       padconnectionstatus.connected();
+      padeditor.enable();
+      padeditbar.enable();
+      padimpexp.enable();
     }
     else if (newState == "RECONNECTING")
     {
       padconnectionstatus.reconnecting();
+
+      padeditor.disable();
+      padeditbar.disable();
+      padimpexp.disable();
     }
     else if (newState == "DISCONNECTED")
     {

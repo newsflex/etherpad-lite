@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -102,7 +102,7 @@ var padeditor = (function()
           pad.changeViewOption(font, $("#viewfontmenu").val() == sfont);
         });
       });
-      
+
       // Language
       html10n.bind('localized', function() {
         $("#languagemenu").val(html10n.getLanguage());
@@ -198,11 +198,23 @@ var padeditor = (function()
         self.ace = null;
       }
     },
+    // added by Joe
+    enable: function()
+    {
+      if (self.ace)
+      {
+        $('iframe[name="ace_outer"]').contents().find('iframe').contents().find("#innerdocbody").removeClass("grayedout");
+        self.ace.setProperty("grayedout", false);
+        self.ace.setEditable(true);
+      }
+    },
     disable: function()
     {
       if (self.ace)
       {
-        self.ace.setProperty("grayedOut", true);
+
+        $('iframe[name="ace_outer"]').contents().find('iframe').contents().find("#innerdocbody").addClass("grayedout");
+        self.ace.setProperty("grayedout", true);
         self.ace.setEditable(false);
       }
     },
