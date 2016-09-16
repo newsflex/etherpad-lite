@@ -3380,6 +3380,7 @@ function Ace2Inner(){
 
   function handleClick(evt)
   {
+    console.log('handleClick');
     inCallStackIfNecessary("handleClick", function()
     {
       idleWorkTimer.atMost(200);
@@ -3414,9 +3415,9 @@ function Ace2Inner(){
       }
     }
     //hide the dropdownso
-    if(window.parent.parent.padeditbar){ // required in case its in an iframe should probably use parent..  See Issue 327 https://github.com/ether/etherpad-lite/issues/327
-      window.parent.parent.padeditbar.toggleDropDown("none");
-    }
+    // if(window.parent.parent.padeditbar){ // required in case its in an iframe should probably use parent..  See Issue 327 https://github.com/ether/etherpad-lite/issues/327
+    //   window.parent.parent.padeditbar.toggleDropDown("none");
+    // }
   }
 
   function doReturnKey()

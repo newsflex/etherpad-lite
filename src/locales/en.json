@@ -103,7 +103,7 @@
 
   "pad.modals.disconnected": "You have been disconnected.",
   "pad.modals.disconnected.explanation": "The connection to the server was lost",
-  "pad.modals.disconnected.cause": "The server may be unavailable. Please notify the service administrator if this continues to happen.",
+  "pad.modals.disconnected.cause": "The server may be unavailable. Please try closing and reopening your session and notify the service administrator if this continues to happen.",
 
   "pad.share": "Share this pad",
   "pad.share.readonly": "Read only",
