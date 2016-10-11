@@ -558,7 +558,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
               {
                 // joe was here
                 if (ENABLE_NPR_FONT_STYLES) {
-                  console.log('etherpad-light %s %s cc.DoAttrib "font-weight::bold"', tname, styl);
+                  //console.log('etherpad-light %s %s cc.DoAttrib "font-weight::bold"', tname, styl);
                   cc.doAttrib(state, "font-weight::bold");
                 } else {
                   cc.doAttrib(state, "bold");
