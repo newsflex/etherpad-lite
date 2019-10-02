@@ -1,5 +1,9 @@
 #!/bin/sh
 
+. ~/.nvm/nvm.sh
+nvm install 4.5.0
+nvm use 4.5.0
+
 #Move to the folder where ep-lite is installed
 cd `dirname $0`
 
