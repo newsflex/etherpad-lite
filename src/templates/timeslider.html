@@ -36,6 +36,12 @@
   <link rel="stylesheet" href="../../static/css/pad.css">
   <link rel="stylesheet" href="../../static/css/timeslider.css">
   <link rel="stylesheet" href="../../static/custom/timeslider.css">
+
+  <!-- Added by Joe for Duration to work with timeslider. Notice I am referencing the plugin css files. -->
+  <link rel="stylesheet" type="text/css" href="../../static/plugins/ep_fontawesome/static/css/font-awesome.css"/>
+  <link rel="stylesheet" type="text/css" href="../../static/plugins/ep_newsflex/static/css/ace.css"/>
+  <!-- End of Added by Joe -->
+
   <style type="text/css" title="dynamicsyntax"></style>
   <% e.end_block(); %>
 
@@ -223,8 +229,8 @@
 <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
 <!-- Include base packages manually (this help with debugging) -->
-<script type="text/javascript" src="../../javascripts/lib/ep_etherpad-lite/static/js/timeslider.js?callback=require.define"></script>
-<script type="text/javascript" src="../../javascripts/lib/ep_etherpad-lite/static/js/ace2_common.js?callback=require.define"></script>
+<script type="text/javascript" src="../../javascripts/<%=settings.ep_npr_version%>/lib/ep_etherpad-lite/static/js/timeslider.js?callback=require.define"></script>
+<script type="text/javascript" src="../../javascripts/<%=settings.ep_npr_version%>/lib/ep_etherpad-lite/static/js/ace2_common.js?callback=require.define"></script>
 
 <script type="text/javascript" src="../../static/custom/timeslider.js"></script>
 
@@ -239,8 +245,8 @@
     var baseURL = pathComponents.slice(0,pathComponents.length-3).join('/') + '/';
 
 
-    require.setRootURI(baseURL + "javascripts/src");
-    require.setLibraryURI(baseURL + "javascripts/lib");
+    require.setRootURI(baseURL + "javascripts/<%=settings.ep_npr_version%>/src");
+    require.setLibraryURI(baseURL + "javascripts/<%=settings.ep_npr_version%>/lib");
     require.setGlobalKeyPath("require");
 
     $ = jQuery = require('ep_etherpad-lite/static/js/rjquery').jQuery; // Expose jQuery #HACK
@@ -270,4 +276,3 @@
 <% e.end_block(); %>
 </body>
 </html>
-

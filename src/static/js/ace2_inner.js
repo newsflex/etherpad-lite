@@ -49,6 +49,11 @@ var hooks = require('./pluginfw/hooks');
 
 function Ace2Inner(){
 
+  // hack by joe for duration cursor
+  // use ENABLE_DURATION_HACK to enable and disable the duration cursor hack.
+  var direction = '';
+  var ENABLE_DURATION_HACK = true;
+
   var makeChangesetTracker = require('./changesettracker').makeChangesetTracker;
   var colorutils = require('./colorutils').colorutils;
   var makeContentCollector = require('./contentcollector').makeContentCollector;
@@ -71,7 +76,7 @@ function Ace2Inner(){
 
   var LINE_NUMBER_PADDING_RIGHT = 4;
   var LINE_NUMBER_PADDING_LEFT = 4;
-  var MIN_LINEDIV_WIDTH = 20;
+  var MIN_LINEDIV_WIDTH = 30;
   var EDIT_BODY_PADDING_TOP = 8;
   var EDIT_BODY_PADDING_LEFT = 8;
 
@@ -127,7 +132,8 @@ function Ace2Inner(){
   var iframePadBottom = 0,
       iframePadRight = 0;
 
-  var console = (DEBUG && window.console);
+  // joe removed the DEBUG flag for console once and for all
+  var console = (window.console);
   var documentAttributeManager;
 
   if (!window.console)
@@ -358,6 +364,16 @@ function Ace2Inner(){
     color = colorutils.blend(color, [1, 1, 1], fadeFrac);
     return colorutils.triple2css(color);
   }
+
+  // added by Joe
+  editorInfo.ace_getDocumentAttributeManager = function() {
+      return documentAttributeManager;
+  }
+
+  editorInfo.ace_getDocumentAttributeManager = function()
+  {
+    return documentAttributeManager;
+  };
 
   editorInfo.ace_getRep = function()
   {
@@ -1893,17 +1909,45 @@ function Ace2Inner(){
       var thisLine = rep.lines.atIndex(lineNum);
       var prevLine = rep.lines.prev(thisLine);
       var prevLineText = prevLine.text;
+
+      // hack by joe to keep duration from incorrectly indenting when
+      // duration tag is first text on the line
+      //console.log('prevLineText = ', prevLineText);
+      var dontIndent = (prevLineText || '').trim() === '';
+      if (dontIndent) {
+          return;
+      }
+
       var theIndent = /^ *(?:)/.exec(prevLineText)[0];
       var shouldIndent = parent.parent.clientVars.indentationOnNewLine;
       if (shouldIndent && /[\[\(\:\{]\s*$/.exec(prevLineText))
       {
         theIndent += THE_TAB;
       }
+
+      var attributes = [['author', thisAuthor]];
+
+      // added by joe: if we are going to indent with spaces
+      // be sure to bring along the attributes by allowing the hook to provide
+      // any current attributes to apply along with author
+      try {
+          // only run hook if we are actually doing an indent
+          if (shouldIndent && theIndent > '') {
+              var attributesForIndent = hooks.callAll('acePreIndentWithSpaces', {
+                  NPR_hook: true
+              });
+              console.log('ace indent will also apply ', JSON.stringify(attributesForIndent));
+              _.each(attributesForIndent || [], function(a) {
+                  attributes.push(a);
+              });
+        }
+     } catch (ex) {
+         logger.error('custom NPR hook crashed. silently continuing.');
+     }
+
       var cs = Changeset.builder(rep.lines.totalWidth()).keep(
       rep.lines.offsetOfIndex(lineNum), lineNum).insert(
-      theIndent, [
-        ['author', thisAuthor]
-      ], rep.apool).toString();
+      theIndent, attributes, rep.apool).toString();
       performDocumentApplyChangeset(cs);
       performSelectionChange([lineNum, theIndent.length], [lineNum, theIndent.length]);
     }
@@ -3336,6 +3380,7 @@ function Ace2Inner(){
 
   function handleClick(evt)
   {
+    console.log('handleClick');
     inCallStackIfNecessary("handleClick", function()
     {
       idleWorkTimer.atMost(200);
@@ -3370,9 +3415,9 @@ function Ace2Inner(){
       }
     }
     //hide the dropdownso
-    if(window.parent.parent.padeditbar){ // required in case its in an iframe should probably use parent..  See Issue 327 https://github.com/ether/etherpad-lite/issues/327
-      window.parent.parent.padeditbar.toggleDropDown("none");
-    }
+    // if(window.parent.parent.padeditbar){ // required in case its in an iframe should probably use parent..  See Issue 327 https://github.com/ether/etherpad-lite/issues/327
+    //   window.parent.parent.padeditbar.toggleDropDown("none");
+    // }
   }
 
   function doReturnKey()
@@ -3471,6 +3516,8 @@ function Ace2Inner(){
 
   function doDeleteKey(optEvt)
   {
+    //console.log('doDeleteKey rep.selStart = ', rep.selStart);
+
     var evt = optEvt || {};
     var handled = false;
     if (rep.selStart)
@@ -3481,6 +3528,10 @@ function Ace2Inner(){
         var col = caretColumn();
         var lineEntry = rep.lines.atIndex(lineNum);
         var lineText = lineEntry.text;
+
+        //console.log('doDeleteKey lineEntry = ', lineEntry);
+        //console.log('doDeleteKey lineText = ', lineText);
+
         var lineMarker = lineEntry.lineMarker;
         if (/^ +$/.exec(lineText.substring(lineMarker, col)))
         {
@@ -3552,14 +3603,61 @@ function Ace2Inner(){
               else
               {
                 // normal delete
+                //console.log('doDeleteKey normal Delete');
                 performDocumentReplaceCharRange(docChar - 1, docChar, '');
               }
+
+              // JOE delete hack for hitting the backspace with NO selection
+              // hook added by joe
+              try {
+                  var repDeleted = lineAndColumnFromChar(docChar - 1);
+                  hooks.callAll('aceDeleteKeyPost', {
+                    callstack: currentCallStack,
+                    rep: rep,
+                    editorInfo: editorInfo,
+                    documentAttributeManager: documentAttributeManager,
+                    startRepJustDeleted: repDeleted,
+                    endRepJustDeleted: repDeleted, //same as start since no selection
+                    isSelection: false,
+                    NPR_hook: true
+                  });
+              }
+              catch(ex) {
+                  console.error(ex);
+                  console.error('Plugin error in aceDeleteKeyPost. Swallowing the exception');
+              }
+
             }
           }
         }
         else
         {
+
+          //joe: make copies before we do anything.
+          var startRepJustDeleted = rep.selStart.slice();
+          var endRepJustDeleted = rep.selEnd.slice();
+
+          //console.log('doDeleteKey a selection ', rep.selStart, rep.selEnd);
           performDocumentReplaceSelection('');
+
+          // JOE delete hack for hitting the backspace WITH a selection
+          // hook added by joe
+          try {
+              hooks.callAll('aceDeleteKeyPost', {
+                  callstack: currentCallStack,
+                  rep: rep,
+                  editorInfo: editorInfo,
+                  documentAttributeManager: documentAttributeManager,
+                  startRepJustDeleted: startRepJustDeleted,
+                  endRepJustDeleted: endRepJustDeleted,
+                  isSelection: true,
+                  NPR_hook: true
+              });
+          }
+          catch(ex) {
+              console.error(ex);
+              console.error('Plugin error in aceDeleteKeyPost. Swallowing the exception');
+          }
         }
       }
     }
@@ -3724,6 +3822,8 @@ function Ace2Inner(){
         if (specialHandledInHook) {
           specialHandled = _.contains(specialHandledInHook, true);
         }
+
+        //console.log('aceKeyEvent specialHandled = ', specialHandled);
 
         if ((!specialHandled) && altKey && isTypeForSpecialKey && keyCode == 120){
           // Alt F9 focuses on the File Menu and/or editbar.
@@ -3903,6 +4003,7 @@ function Ace2Inner(){
         if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "b" && (evt.metaKey || evt.ctrlKey))
         {
           // cmd-B (bold)
+          console.log('running etherpad-lite bold shortcut');
           fastIncorp(13);
           evt.preventDefault();
           toggleAttributeOnSelection('bold');
@@ -3924,7 +4025,8 @@ function Ace2Inner(){
           toggleAttributeOnSelection('underline');
           specialHandled = true;
         }
-        if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "5" && (evt.metaKey || evt.ctrlKey) && evt.altKey !== true)
+        if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "6" && evt.altKey)
+        //if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "5" && (evt.metaKey || evt.ctrlKey) && evt.altKey !== true)
         {
           // cmd-5 (strikethrough)
           fastIncorp(13);
@@ -3932,17 +4034,20 @@ function Ace2Inner(){
           toggleAttributeOnSelection('strikethrough');
           specialHandled = true;
         }
-        if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "l" && (evt.metaKey || evt.ctrlKey) && evt.shiftKey)
+        //Making these changes to match NF tern shortcuts
+        //if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "l" && (evt.metaKey || evt.ctrlKey) && evt.shiftKey)
+        if ((!specialHandled) && isTypeForCmdKey && String.fromCharCode(which).toLowerCase() == "b" && (evt.metaKey || evt.altKey))
         {
-          // cmd-shift-L (unorderedlist)
+          // alt-b (unorderedlist)
           fastIncorp(9);
           evt.preventDefault();
           doInsertUnorderedList()
           specialHandled = true;
 	}
-        if ((!specialHandled) && isTypeForCmdKey && (String.fromCharCode(which).toLowerCase() == "n" || String.fromCharCode(which) == 1) && (evt.metaKey || evt.ctrlKey) && evt.shiftKey)
+        //if ((!specialHandled) && isTypeForCmdKey && (String.fromCharCode(which).toLowerCase() == "n" || String.fromCharCode(which) == 1) && (evt.metaKey || evt.ctrlKey) && evt.shiftKey)
+        if ((!specialHandled) && isTypeForCmdKey && (String.fromCharCode(which).toLowerCase() == "n" || String.fromCharCode(which) == 1) && (evt.metaKey || evt.altKey))
         {
-          // cmd-shift-N (orderedlist)
+          // alt-n (orderedlist)
           fastIncorp(9);
           evt.preventDefault();
           doInsertOrderedList()
@@ -4014,12 +4119,24 @@ function Ace2Inner(){
 
           }, 200);
         }
+
+        // hack by joe for duration cursor.
+        // we need to keep track of current direction
+        // inside a global direction var
+        if (evt.which == 37) direction = 'left';
+        else if (evt.which == 39) direction = 'right';
+        else direction = '';
+
         /* Attempt to apply some sanity to cursor handling in Chrome after a copy / paste event
            We have to do this the way we do because rep. doesn't hold the value for keyheld events IE if the user
            presses and holds the arrow key ..  Sorry if this is ugly, blame Chrome's weird handling of viewports after new content is added*/
         if((evt.which == 37 || evt.which == 38 || evt.which == 39 || evt.which == 40) && browser.chrome){
+
           var viewport = getViewPortTopBottom();
           var myselection = document.getSelection(); // get the current caret selection, can't use rep. here because that only gives us the start position not the current
+
+          //console.log('selection = ', myselection);
+
           var caretOffsetTop = myselection.focusNode.parentNode.offsetTop || myselection.focusNode.offsetTop; // get the carets selection offset in px IE 214
           var lineHeight = $(myselection.focusNode.parentNode).parent("div").height(); // get the line height of the caret line
           // top.console.log("offsetTop", myselection.focusNode.parentNode.parentNode.offsetTop);
@@ -4702,8 +4819,59 @@ function Ace2Inner(){
             diveDeep();
           }
         }
+
+        // this is joe's hack to make sure the cursor does not get stuck or stop
+        // inside the duration tag.
+        if (ENABLE_DURATION_HACK) {
+
+            var isInCanvasTag = p.node.parentNode && p.node.parentNode.tagName === 'CANVAS';
+            if (isInCanvasTag && direction && p.node.parentNode) {
+              //console.log('The caret is in the duration canvas with isNodeText(p.node) = ', isNodeText(p.node));
+
+              var container = p.node.parentNode;
+              var offset = childIndex(p.node) + p.index;
+              var canvas = p.node.parentNode;
+
+              if (direction === 'left') {
+                  if (canvas.parentNode && canvas.parentNode.previousSibling) {
+                      console.log('jumping to next previousSibling = ', canvas.parentNode.previousSibling);
+                      container = canvas.parentNode.previousSibling;
+                      offset = 1; // 1 for end of container
+                  } else {
+                    if (canvas.parentNode && canvas.parentNode.parentNode &&  canvas.parentNode.parentNode.previousSibling) {
+                      console.log('jumping to next grand previousSibling = ', canvas.parentNode.parentNode.previousSibling);
+                      container = canvas.parentNode.parentNode.previousSibling;
+                      offset = 1;
+                    }
+                  }
+              }
+              else { // direction right is assumed
+
+                  if (canvas.parentNode && canvas.parentNode.nextSibling) {
+                      console.log('jumping to next sibling = ', canvas.parentNode.nextSibling);
+                      container = canvas.parentNode.nextSibling;
+                      offset = 0; // 0 for beginning of container
+                  } else {
+                     if (canvas.parentNode && canvas.parentNode.parentNode && canvas.parentNode.parentNode.nextSibling) {
+                        console.log('jumping to next grand sibling = ', canvas.parentNode.parentNode.nextSibling);
+                        container = canvas.parentNode.parentNode.nextSibling;
+                        offset = 0;
+                     }
+                  }
+              }
+
+              return {
+                  container: container,
+                  offset: offset
+              }
+            }
+
+        } // end of ENABLE_DURATION_HACK
+
+
         if (isNodeText(p.node))
         {
+
           return {
             container: p.node,
             offset: p.index
@@ -4711,6 +4879,7 @@ function Ace2Inner(){
         }
         else
         {
+
           // p.index in {0,1}
           return {
             container: p.node.parentNode,
@@ -5537,6 +5706,38 @@ function Ace2Inner(){
       isSetUp = true;
     });
   }
+
+  editorInfo.ace_getSelectedText =  function()
+  {
+    if (!(rep.selStart && rep.selEnd)) return;
+
+    var selection = '';
+    var selStartLine = rep.selStart[0];
+    var selEndLine = rep.selEnd[0];
+
+    if (selStartLine === selEndLine){
+      selection = rep.lines.atIndex(selEndLine).text.substring(rep.selStart[1],rep.selEnd[1]);
+      return selection;
+    }
+
+
+    for (var n = selStartLine; n <= selEndLine; n++)
+    {
+      var selectionEndInLine = rep.lines.atIndex(n).text.length; // exclude newline
+
+      if (n == selStartLine)
+      {
+        selection += rep.lines.atIndex(n).text.substring(rep.selStart[1]);
+      }else if (n == selEndLine)
+      {
+        selection += rep.lines.atIndex(n).text.substring(0,rep.selEnd[1]);
+      }else {
+        selection += rep.lines.atIndex(n).text;
+      }
+    }
+
+    return selection;
+  };
 
 }
 

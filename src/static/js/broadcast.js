@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -239,7 +239,7 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
    */
 
   function applyChangeset(changeset, revision, preventSliderMovement, timeDelta)
-  { 
+  {
     // disable the next 'gotorevision' call handled by a timeslider update
     if (!preventSliderMovement)
     {
@@ -263,13 +263,26 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
 
     debugLog('Time Delta: ', timeDelta)
     updateTimer();
-    
+
     var authors = _.map(padContents.getActiveAuthors(), function(name)
     {
       return authorData[name];
     });
-    
+
     BroadcastSlider.setAuthors(authors);
+
+    // trust no one
+    try {
+        // added by joe to render durations AFTER
+        // they have been added to the DOM
+        hooks.callAll('postTimesliderRender', {
+            NPR_hook: true
+        });
+    }
+    catch(ex) {
+        console.error(ex);
+        console.error('Error in plugin hook postTimesliderRender. Swallowing it.');
+    }
   }
 
   function updateTimer()
@@ -281,7 +294,7 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
         str = '0' + str;
         return str;
         }
-        
+
     var date = new Date(padContents.currentTime);
     var dateFormat = function()
       {
@@ -296,15 +309,15 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
           "month": month,
           "year": year,
           "hours": hours,
-          "minutes": minutes, 
+          "minutes": minutes,
           "seconds": seconds
         }));
         }
-        
-        
-        
-        
-        
+
+
+
+
+
     $('#timer').html(dateFormat());
     var revisionDate = html10n.get("timeslider.saved", {
       "day": date.getDate(),
@@ -327,7 +340,7 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
     $('#revision_date').html(revisionDate)
 
   }
-  
+
   updateTimer();
 
   function goToRevision(newRevision)
@@ -378,13 +391,13 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
       // Loading changeset history for old revision (to make diff between old and new revision)
       loadChangesetsForRevision(padContents.currentRevision - 1);
     }
-    
+
     var authors = _.map(padContents.getActiveAuthors(), function(name){
       return authorData[name];
     });
     BroadcastSlider.setAuthors(authors);
   }
-  
+
   function loadChangesetsForRevision(revision, callback) {
     if (BroadcastSlider.getSliderLength() > 10000)
     {
@@ -548,9 +561,16 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
     {
       var div = padContents.lineToElement(padContents.currentLines[i], padContents.alines[i]);
       padContents.currentDivs.push(div);
+
+      debugLog('setting #padContent');
       $("#padcontent").append(div);
+
     }
     debugLog(padContents.currentDivs);
+
+    // added by joe to render durations AFTER
+    // they have been added to the DOM
+    hooks.callAll('postTimesliderRender', {});
   });
 
   // this is necessary to keep infinite loops of events firing,
@@ -566,7 +586,7 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
       goToRevision.apply(goToRevision, arguments);
     }
   }
-      
+
   BroadcastSlider.onSlider(goToRevisionIfEnabled);
 
   var dynamicCSS = makeCSSManager('dynamicsyntax');
@@ -581,8 +601,10 @@ function loadBroadcastJS(socket, sendSocketMsg, fireWhenAllScriptsAreLoaded, Bro
       if (bgcolor && dynamicCSS)
       {
         var selector = dynamicCSS.selectorStyle('.' + linestylefilter.getAuthorClassName(author));
-        selector.backgroundColor = bgcolor
-        selector.color = (colorutils.luminosity(colorutils.css2triple(bgcolor)) < 0.5) ? '#ffffff' : '#000000'; //see ace2_inner.js for the other part
+        // added by Joe to make author colors use underline instead of backgroudn color
+        //selector.backgroundColor = bgcolor;
+        //selector.color = (colorutils.luminosity(colorutils.css2triple(bgcolor)) < 0.5) ? '#ffffff' : '#000000'; //see ace2_inner.js for the other part
+        selector.borderBottom = "2px solid " + bgcolor;
       }
       authorData[author] = data;
     }

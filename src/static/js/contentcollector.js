@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -22,6 +22,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+var ENABLE_NPR_FONT_STYLES = true;
 
 var _MAX_LIST_LEVEL = 16;
 
@@ -252,14 +254,14 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
     {
       state.listNesting = (state.listNesting || 0) + 1;
     }
-    
+
     if(listType === 'none' || !listType ){
-      delete state.lineAttributes['list']; 
+      delete state.lineAttributes['list'];
     }
     else{
       state.lineAttributes['list'] = listType;
     }
-    
+
     _recalcAttribString(state);
     return oldListType;
   }
@@ -303,7 +305,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
         // see https://github.com/ether/etherpad-lite/issues/2567 for more information
         // in long term the contentcollector should be refactored to get rid of this workaround
         var ATTRIBUTE_SPLIT_STRING = "::";
-        
+
         // see if attributeString is splittable
         var attributeSplits = a.split(ATTRIBUTE_SPLIT_STRING);
         if (attributeSplits.length > 1) {
@@ -410,7 +412,7 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
         text:txt,
         styl: null,
         cls: null
-      });  
+      });
       var txt = (typeof(txtFromHook)=='object'&&txtFromHook.length==0)?dom.nodeValue(node):txtFromHook[0];
 
       var rest = '';
@@ -504,18 +506,20 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
           tvalue:tvalue,
           styl: null,
           cls: null
-        });       
+        });
         var startNewLine= (typeof(induceLineBreak)=='object'&&induceLineBreak.length==0)?true:induceLineBreak[0];
         if(startNewLine){
           cc.startNewLine(state);
         }
       }
-      else if (tname == "script" || tname == "style")
+      else if (tname == "script" || tname == "style" || tname === 'meta' || tname === 'head')
       {
         // ignore
+        console.log('CC ignoring %s', tname);
       }
       else if (!isEmpty)
       {
+        //console.dir(node);
         var styl = dom.nodeAttr(node, "style");
         var cls = dom.nodeAttr(node, "class");
         var isPre = (tname == "pre");
@@ -533,23 +537,64 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
             state: state,
             tname: tname,
             styl: styl,
-            cls: cls
+            cls: cls,
+            // added by joe to handle <font> node
+            node: node
           });
-          if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
-          {
-            cc.doAttrib(state, "bold");
+
+          // joe: we want to avoid ace-line content. If we don't have this
+          // if test then we end up with duplicate bolds and such on paste events
+          var isAceLine = false;
+
+          /// be safe about it. errors here would break import html aka Opening pad
+          try {
+              isAceLine = (tname || '').toLowerCase() === 'div' && (cls || '').indexOf('ace-line') > -1;
+          } catch(ex) {
+              console.warn(ex);
           }
-          if (tname == "i" || (styl && /\bfont-style:\s*italic\b/i.exec(styl)) || tname == "em")
-          {
-            cc.doAttrib(state, "italic");
-          }
-          if (tname == "u" || (styl && /\btext-decoration:\s*underline\b/i.exec(styl)) || tname == "ins")
-          {
-            cc.doAttrib(state, "underline");
-          }
-          if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del")
-          {
-            cc.doAttrib(state, "strikethrough");
+
+          if (!isAceLine) {
+              if (tname == "b" || (styl && /\bfont-weight:\s*bold\b/i.exec(styl)) || tname == "strong")
+              {
+                // joe was here
+                if (ENABLE_NPR_FONT_STYLES) {
+                  //console.log('etherpad-light %s %s cc.DoAttrib "font-weight::bold"', tname, styl);
+                  cc.doAttrib(state, "font-weight::bold");
+                } else {
+                  cc.doAttrib(state, "bold");
+                }
+              }
+              if (tname == "i" || (styl && /\bfont-style:\s*italic\b/i.exec(styl)) || tname == "em")
+              {
+                  // joe was here
+                  if (ENABLE_NPR_FONT_STYLES) {
+                    console.log('etherpad-light cc.DoAttrib "font-style::italic"');
+                    cc.doAttrib(state, "font-style::italic");
+                  } else {
+                    cc.doAttrib(state, "italic");
+                  }
+              }
+              if (tname == "u" || (styl && /\btext-decoration:\s*underline\b/i.exec(styl)) || tname == "ins")
+              {
+                  // joe was here
+                  if (ENABLE_NPR_FONT_STYLES) {
+                    console.log('etherpad-light cc.DoAttrib "text-decoration::underline"');
+                    cc.doAttrib(state, "text-decoration::underline");
+                  } else {
+                    cc.doAttrib(state, "underline");
+                  }
+              }
+              // joe added strike even though it is obsolete. Tern exports it
+              if (tname == "s" || (styl && /\btext-decoration:\s*line-through\b/i.exec(styl)) || tname == "del" || tname == "strike")
+              {
+                  // joe was here
+                  if (ENABLE_NPR_FONT_STYLES) {
+                    console.log('etherpad-light cc.DoAttrib "text-decoration-strikethrough::line-through"');
+                    cc.doAttrib(state, "text-decoration-strikethrough::line-through");
+                  } else {
+                    cc.doAttrib(state, "strikethrough");
+                  }
+              }
           }
           if (tname == "ul" || tname == "ol")
           {
@@ -646,7 +691,51 @@ function makeContentCollector(collectStyles, abrowser, apool, domInterface, clas
           _exitAuthor(state, oldAuthorOrNull);
         }
       }
+      else {
+
+          // joe canvas duration hack for Pasting
+          // if we make it this far then the content collector has encounterd HTML
+          // tags that it does not know how to handle and thinks it is empty.
+
+          // we will create a hook to keep the code out of here but basically the hook
+          // expects you to return and object in the format
+          //    { text: ' ', attributes: [[attr: val]] };
+          //  The text will be APPENDED with the provided attributes
+          //
+        if (tname === 'canvas') {
+
+            try {
+                var textAndAttributes = hooks.callAll('collectContentCanvas', {
+                  cc: cc,
+                  state: state,
+                  tname: tname,
+                  styl: styl,
+                  cls: cls,
+                  node: node, // makes life easier to pass canvas node to hook,
+                  NPR_hook: true // just a flag for devs to know its one of ours
+                });
+
+                console.log('collectContentCanvas returned textAndAttributes = ', textAndAttributes);
+                if (textAndAttributes) {
+                    _.each(textAndAttributes, function(item) {
+                        var txt = textify(item.text);
+                        var attributes = item.attributes;
+                        console.log('Appending canvas replacement text to lines. txt ', txt);
+                        lines.appendText(txt, Changeset.makeAttribsString('+', attributes , apool));
+                    });
+                }
+            }
+            catch(e) {
+                console.log(e);
+                console.log('error in joe collectContentCanvas hook. handled it.');
+            }
+        }
+
+      }
+
     }
+
+
     if (!abrowser.msie)
     {
       _reachBlockPoint(node, 1, state);

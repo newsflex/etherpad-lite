@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -62,11 +62,11 @@ function createCookie(name, value, days, path){ /* Warning Internet Explorer doe
   else{
     var expires = "";
   }
-  
+
   if(!path){ // If the path isn't set then just whack the cookie on the root path
     path = "/";
   }
-  
+
   //Check if the browser is IE and if so make sure the full path is set in the cookie
   if((navigator.appName == 'Microsoft Internet Explorer') || ((navigator.appName == 'Netscape') && (new RegExp("Trident/.*rv:([0-9]{1,}[\.0-9]{0,})").exec(navigator.userAgent) != null))){
     document.cookie = name + "=" + value + expires + "; path="+document.location;
@@ -136,15 +136,15 @@ function getParams()
       setting.callback(value);
     }
   }
-  
+
   // Then URL applied stuff
   var params = getUrlVars()
-  
+
   for(var i = 0; i < getParameters.length; i++)
   {
     var setting = getParameters[i];
     var value = params[setting.name];
-    
+
     if(value && (value == setting.checkVal || setting.checkVal == null))
     {
       setting.callback(value);
@@ -193,7 +193,7 @@ function sendClientReady(isReconnect, messageType)
     token = "t." + randomString();
     createCookie("token", token, 60);
   }
-  
+
   var sessionID = decodeURIComponent(readCookie("sessionID"));
   var password = readCookie("password");
 
@@ -206,14 +206,14 @@ function sendClientReady(isReconnect, messageType)
     "token": token,
     "protocolVersion": 2
   };
-  
+
   //this is a reconnect, lets tell the server our revisionnumber
   if(isReconnect == true)
   {
     msg.client_rev=pad.collabClient.getCurrentRevisionNumber();
     msg.reconnect=true;
   }
-  
+
   socket.json.send(msg);
 }
 
@@ -231,8 +231,11 @@ function handshake()
     // Allow deployers to host Etherpad on a non-root path
     'path': exports.baseURL + "socket.io",
     'resource': resource,
-    'max reconnection attempts': 3,
-    'sync disconnect on unload' : false
+    'sync disconnect on unload' : false,
+    'reconnection': true,
+    'reconnectionDelay': 500,
+    'reconnectionDelayMax' : 5000,
+    'reconnectionAttempts': 5
   });
 
   var disconnectTimeout;
@@ -240,7 +243,7 @@ function handshake()
   socket.once('connect', function () {
     sendClientReady(false);
   });
-  
+
   socket.on('reconnect', function () {
     //reconnect is before the timeout, lets stop the timeout
     if(disconnectTimeout)
@@ -251,7 +254,7 @@ function handshake()
     pad.collabClient.setChannelState("CONNECTED");
     pad.sendClientReady(true);
   });
-  
+
   socket.on('disconnect', function (reason) {
     if(reason == "booted"){
       pad.collabClient.setChannelState("DISCONNECTED");
@@ -260,9 +263,9 @@ function handshake()
       {
         pad.collabClient.setChannelState("DISCONNECTED", "reconnect_timeout");
       }
-      
+
       pad.collabClient.setChannelState("RECONNECTING");
-      
+
       disconnectTimeout = setTimeout(disconnectEvent, 20000);
     }
   });
@@ -304,7 +307,7 @@ function handshake()
         $("#passwordinput").focus();
       }
     }
-    
+
     //if we haven't recieved the clientVars yet, then this message should it be
     else if (!receivedClientVars && obj.type == "CLIENT_VARS")
     {
@@ -317,7 +320,7 @@ function handshake()
       clientVars = obj.data;
       clientVars.userAgent = "Anonymous";
       clientVars.collab_client_vars.clientAgent = "Anonymous";
- 
+
       //initalize the pad
       pad._afterHandshake();
       initalized = true;
@@ -341,6 +344,8 @@ function handshake()
       if (settings.LineNumbersDisabled == true)
       {
         pad.changeViewOption('showLineNumbers', false);
+      } else {
+        pad.changeViewOption('showLineNumbers', true);
       }
 
       // If the noColors value is set to true then we need to hide the background colors on the ace spans
@@ -348,7 +353,7 @@ function handshake()
       {
         pad.changeViewOption('noColors', true);
       }
-      
+
       if (settings.rtlIsTrue == true)
       {
         pad.changeViewOption('rtlIsTrue', true);
@@ -395,13 +400,13 @@ function handshake()
   });
   // Bind the colorpicker
   var fb = $('#colorpicker').farbtastic({ callback: '#mycolorpickerpreview', width: 220});
-  // Bind the read only button  
+  // Bind the read only button
   $('#readonlyinput').on('click',function(){
     padeditbar.setEmbedLinks();
   });
 }
 
-$.extend($.gritter.options, { 
+$.extend($.gritter.options, {
   position: 'bottom-right', // defaults to 'top-right' but can be 'bottom-left', 'bottom-right', 'top-left', 'top-right' (added in 1.7.1)
   fade: false, // dont fade, too jerky on mobile
   time: 6000 // hang on the screen for...
@@ -474,7 +479,7 @@ var pad = {
     if(window.history && window.history.pushState)
     {
       $('#chattext p').remove(); //clear the chat messages
-      window.history.pushState("", "", newHref);      
+      window.history.pushState("", "", newHref);
       receivedClientVars = false;
       sendClientReady(false, 'SWITCH_TO_PAD');
     }
@@ -767,33 +772,42 @@ var pad = {
   {
     var oldFullyConnected = !! padconnectionstatus.isFullyConnected();
     var wasConnecting = (padconnectionstatus.getStatus().what == 'connecting');
+    console.log('socket state changed to:', newState);
     if (newState == "CONNECTED")
     {
       padconnectionstatus.connected();
+      padeditor.enable();
+      padeditbar.enable();
+      padimpexp.enable();
     }
     else if (newState == "RECONNECTING")
     {
       padconnectionstatus.reconnecting();
+
+      padeditor.disable();
+      padeditbar.disable();
+      padimpexp.disable();
     }
     else if (newState == "DISCONNECTED")
     {
+      hooks.aCallAll("postAceDisconnected", {NPR_hook: true});
       pad.diagnosticInfo.disconnectedMessage = message;
       pad.diagnosticInfo.padId = pad.getPadId();
       pad.diagnosticInfo.socket = {};
-      
-      //we filter non objects from the socket object and put them in the diagnosticInfo 
+
+      //we filter non objects from the socket object and put them in the diagnosticInfo
       //this ensures we have no cyclic data - this allows us to stringify the data
       for(var i in socket.socket)
       {
         var value = socket.socket[i];
         var type = typeof value;
-        
+
         if(type == "string" || type == "number")
         {
           pad.diagnosticInfo.socket[i] = value;
         }
       }
-    
+
       pad.asyncSendDiagnosticInfo();
       if (typeof window.ajlog == "string")
       {

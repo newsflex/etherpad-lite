@@ -1,5 +1,5 @@
 /**
- * This code is mostly from the old Etherpad. Please help us to comment this code. 
+ * This code is mostly from the old Etherpad. Please help us to comment this code.
  * This helps other people to understand this code better and helps them to improve it.
  * TL;DR COMMENTS ON THIS FILE ARE HIGHLY APPRECIATED
  */
@@ -135,7 +135,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
             }
             postHtml += '</li></ol>';
           }
-        } 
+        }
         processedMarker = true;
       }
       _.map(hooks.callAll("aceDomLineProcessLineAttributes", {
@@ -150,7 +150,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       if( processedMarker ){
         result.lineMarker += txt.length;
         return; // don't append any text
-      } 
+      }
     }
     var href = null;
     var simpleTags = null;
@@ -174,6 +174,7 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
 
     var extraOpenTags = "";
     var extraCloseTags = "";
+    var extraStyles = "";
 
     _.map(hooks.callAll("aceCreateDomLine", {
       domline: domline,
@@ -183,6 +184,25 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
       cls = modifier.cls;
       extraOpenTags = extraOpenTags + modifier.extraOpenTags;
       extraCloseTags = modifier.extraCloseTags + extraCloseTags;
+
+      // added by joe
+      parentCls = modifier.parentCls;
+
+      // added by joe
+      if (modifier.parentCls) {
+          // if we already have an alignment replace it
+          if (lineClass.indexOf('align-') > -1) {
+              lineClass = lineClass.replace(/align-[a-z]+/, modifier.parentCls);
+          } else {
+              lineClass = lineClass + ' ' + modifier.parentCls;
+          }
+      }
+
+      //joe: allow inline css styles to be passed back in addition to tags
+      if (modifier.extraStyles) {
+        extraStyles = modifier.extraStyles + (extraStyles || '');
+      }
+
     });
 
     if ((!txt) && cls)
@@ -208,13 +228,17 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
         simpleTags.reverse();
         extraCloseTags = '</' + simpleTags.join('></') + '>' + extraCloseTags;
       }
-      html.push('<span class="', Security.escapeHTMLAttribute(cls || ''), '">', extraOpenTags, perTextNodeProcess(Security.escapeHTML(txt)), extraCloseTags, '</span>');
+
+      // joe added the inline styles. much cleaner then seperate spans for every different font
+      html.push('<span class="', Security.escapeHTMLAttribute(cls || ''), '" style="', Security.escapeHTMLAttribute(extraStyles || ''), '">', extraOpenTags, perTextNodeProcess(Security.escapeHTML(txt)), extraCloseTags, '</span>');
     }
   };
   result.clearSpans = function()
   {
     html = [];
-    lineClass = ''; // non-null to cause update
+    // joe added ace-line instead of empty string '' because
+    // we always want an ace-line to be there.
+    lineClass = 'ace-line'; // non-null to cause update
     result.lineMarker = 0;
   };
 
@@ -245,7 +269,9 @@ domline.createDomLine = function(nonEmpty, doesWrap, optBrowser, optDocument)
     if (lineClass !== null) result.node.className = lineClass;
 
     hooks.callAll("acePostWriteDomLineHTML", {
-      node: result.node
+      node: result.node,
+      // added by joe
+      isEmpty: !nonEmpty
     });
   }
   result.prepareForAdd = writeHTML;

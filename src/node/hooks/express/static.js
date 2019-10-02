@@ -20,7 +20,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
   var jsServer = new (Yajsml.Server)({
     rootPath: 'javascripts/src/'
   , rootURI: 'http://localhost:' + settings.port + '/static/js/'
-  , libraryPath: 'javascripts/lib/'
+  , libraryPath: 'javascripts/' + settings.ep_npr_version + '/lib/'
   , libraryURI: 'http://localhost:' + settings.port + '/static/plugins/'
   , requestURIs: minify.requestURIs // Loop-back is causing problems, this is a workaround.
   });
@@ -33,15 +33,24 @@ exports.expressCreateServer = function (hook_name, args, cb) {
 
   args.app.use(jsServer.handle.bind(jsServer));
 
+  args.app.get('/npr_version', function (req, res, next) {
+      var nprVersionInfo = {
+          npr_version: settings.ep_npr_version
+      };
+      res.header("Content-Type","application/json; charset=utf-8");
+      res.write(JSON.stringify(nprVersionInfo));
+      res.end();
+  });
+
   // serve plugin definitions
   // not very static, but served here so that client can do require("pluginfw/static/js/plugin-definitions.js");
   args.app.get('/pluginfw/plugin-definitions.json', function (req, res, next) {
 
     var clientParts = _(plugins.parts)
       .filter(function(part){ return _(part).has('client_hooks') });
-      
+
     var clientPlugins = {};
-    
+
     _(clientParts).chain()
       .map(function(part){ return part.plugin })
       .uniq()
@@ -49,7 +58,7 @@ exports.expressCreateServer = function (hook_name, args, cb) {
         clientPlugins[name] = _(plugins.plugins[name]).clone();
         delete clientPlugins[name]['package'];
       });
-      
+
     res.header("Content-Type","application/json; charset=utf-8");
     res.write(JSON.stringify({"plugins": clientPlugins, "parts": clientParts}));
     res.end();

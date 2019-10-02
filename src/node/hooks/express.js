@@ -5,6 +5,7 @@ var fs = require('fs');
 var path = require('path');
 var npm = require("npm/lib/npm.js");
 var  _ = require("underscore");
+var cors = require('cors')
 
 var server;
 var serverName;
@@ -13,7 +14,7 @@ exports.createServer = function () {
   console.log("Report bugs at https://github.com/ether/etherpad-lite/issues")
 
   serverName = "Etherpad " + settings.getGitCommit() + " (http://etherpad.org)";
-  
+
   console.log("Your Etherpad version is " + settings.getEpVersion() + " (" + settings.getGitCommit() + ")");
 
   exports.restartServer();
@@ -35,13 +36,14 @@ exports.restartServer = function () {
   }
 
   var app = express(); // New syntax for express v3
+  app.use(cors());
 
   if (settings.ssl) {
 
     console.log( "SSL -- enabled");
     console.log( "SSL -- server key file: " + settings.ssl.key );
     console.log( "SSL -- Certificate Authority's certificate file: " + settings.ssl.cert );
-    
+
     var options = {
       key: fs.readFileSync( settings.ssl.key ),
       cert: fs.readFileSync( settings.ssl.cert )
@@ -53,7 +55,7 @@ exports.restartServer = function () {
         options.ca.push(fs.readFileSync(caFileName));
       }
     }
-    
+
     var https = require('https');
     server = https.createServer(options, app);
 

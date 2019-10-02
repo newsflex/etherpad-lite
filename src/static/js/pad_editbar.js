@@ -176,6 +176,10 @@ var padeditbar = (function()
 //      return !$("#editbar").hasClass('disabledtoolbar');
       return true;
     },
+    enable: function()
+    {
+      $("#editbar").addClass('disabledtoolbar').addClass("enabledtoolbar");
+    },
     disable: function()
     {
       $("#editbar").addClass('disabledtoolbar').removeClass("enabledtoolbar");

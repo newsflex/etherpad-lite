@@ -447,14 +447,35 @@ function getHTMLFromAtext(pad, atext, authorColors)
         apool: apool,
         attribLine: attribLines[i],
         text: textLines[i],
-        padId: pad.id
+        padId: pad.id,
+
+        // added by Joe for styles that need
+        // to be applied to entire Block (p or div)
+        // like line-height and text-align
+        blockStyles: []
       }
 
-      var lineContentFromHook = hooks.callAllStr("getLineHTMLForExport", context, " ", " ", "");
+      // changed pre and post args form " " to "" because I didn't want the extra
+      // spaces. -Joe
+      var lineContentFromHook = hooks.callAllStr("getLineHTMLForExport", context, "", "", "");
+      console.log('getLineHTMLForExport =', lineContentFromHook);
 
-      if (lineContentFromHook)
-      {
-        pieces.push(lineContentFromHook, '<br>');
+      if (lineContentFromHook) {
+        // joe changes
+        var cssText = "";
+        if (context.blockStyles.length > 0) {
+            _.each(context.blockStyles, function appendCss(s) {
+                cssText = cssText + s.style + ':' + s.value + ';';
+            });
+        }
+
+        if (lineContentFromHook.length === 1 && lineContentFromHook[0] === '') {
+            // just for tern!
+            lineContentFromHook = '<br />';
+        }
+
+        var openingDiv = '<div style="{0}">'.replace("{0}", cssText);
+        pieces.push(openingDiv, lineContentFromHook, '</div>');
       }
       else
       {
@@ -500,8 +521,6 @@ exports.getPadHTMLDocument = function (padId, revNum, noDocType, callback)
           '<meta name="changedby" content="Etherpad">\n' +
           '<meta charset="utf-8">\n' +
           '<style> * { font-family: arial, sans-serif;\n' +
-            'font-size: 13px;\n' +
-            'line-height: 17px; }' +
             'ul.indent { list-style-type: none; }' +
 
             'ol { list-style-type: none; padding-left:0;}' +
